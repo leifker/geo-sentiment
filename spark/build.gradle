@@ -1,0 +1,75 @@
+apply plugin: 'scala'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.github.maiflai.scalatest'
+
+def scalaVersion = '2.11.8'
+def sparkVersion = '2.0.2'
+
+dependencies {
+  // compileOnly - excludes transitives from shadow - provided by cluster
+  compileOnly "org.apache.spark:spark-core_2.11:$sparkVersion"
+  compileOnly "org.apache.spark:spark-sql_2.11:$sparkVersion"
+
+  compile "org.scala-lang:scala-library:$scalaVersion"
+  compile 'com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3'
+  compile "com.fasterxml.jackson.module:jackson-module-scala_2.11:$jacksonVersion"
+
+  integrationTestCompile "org.apache.spark:spark-core_2.11:$sparkVersion"
+  integrationTestCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"
+
+  testCompile "org.apache.spark:spark-core_2.11:$sparkVersion"
+  testCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"
+  testCompile 'org.scalatest:scalatest_2.11:3.0.1'
+  testRuntime 'org.pegdown:pegdown:1.1.0'
+}
+
+test {
+  tags {
+    exclude 'IntegrationTest'
+    include 'UnitTest'
+  }
+}
+
+tasks.getByName('integrationTest') {
+  tags {
+    exclude 'UnitTest'
+    exclude 'org.scalatest.tags.Slow'
+    include 'IntegrationTest'
+ }
+}
+
+shadowJar {
+  zip64 true
+  classifier = 'shadow'
+  dependencies {
+    exclude(dependency("org.scala-lang:scala-library:$scalaVersion"))
+    exclude(dependency("org.apache.spark:spark-core_2.11:$sparkVersion"))
+    exclude(dependency("org.apache.spark:spark-sql_2.11:$sparkVersion"))
+  }
+}
+
+sourceSets {
+  integrationTest {
+    scala {
+      compileClasspath += main.output + configurations.integrationTestCompile + test.output
+      runtimeClasspath += main.output + configurations.integrationTestRuntime + test.output
+      srcDir file('src/integration-test/scala')
+    }
+    resources.srcDir file('src/integration-test/resources')
+  }
+}
+
+artifacts {
+  archives shadowJar
+}
+
+publishing {
+  publications {
+    shadow(MavenPublication) {
+      from components.shadow
+      artifact shadowJar {
+        classifier = 'shadow'
+      }
+    }  
+  }
+}
