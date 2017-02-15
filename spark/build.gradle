@@ -1,8 +1,5 @@
-apply plugin: 'scala'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'com.github.maiflai.scalatest'
 
-def scalaVersion = '2.11.8'
 def sparkVersion = '2.0.2'
 
 dependencies {

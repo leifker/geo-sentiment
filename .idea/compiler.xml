@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="1.8" />
+    <bytecodeTargetLevel target="1.8">
+      <module name="cassandra_integrationTest" target="1.8" />
+      <module name="cassandra_main" target="1.8" />
+      <module name="cassandra_test" target="1.8" />
+      <module name="geo-sentiment_integrationTest" target="1.8" />
+      <module name="geo-sentiment_main" target="1.8" />
+      <module name="geo-sentiment_test" target="1.8" />
+      <module name="spark_integrationTest" target="1.8" />
+      <module name="spark_main" target="1.8" />
+      <module name="spark_test" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
