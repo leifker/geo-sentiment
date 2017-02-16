@@ -24,7 +24,7 @@ dependencies {
 
 test {
   tags {
-    exclude 'IntegrationTest'
+    exclude 'ITest'
     include 'UnitTest'
   }
 }
@@ -33,7 +33,7 @@ tasks.getByName('integrationTest') {
   tags {
     exclude 'UnitTest'
     exclude 'org.scalatest.tags.Slow'
-    include 'IntegrationTest'
+    include 'ITest'
  }
 }
 

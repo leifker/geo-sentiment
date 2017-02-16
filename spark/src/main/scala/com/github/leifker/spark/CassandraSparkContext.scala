@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession
 /**
   * Created by dleifker on 2/16/17.
   */
-class CassandraSparkContext(config: CassandraSparkConfig, appName: String = "Sentiment") {
+class CassandraSparkContext(config: CassandraSparkConfig, appName: String = "SparkApp") {
    val sparkConf = new SparkConf(true)
       .setMaster(config.sparkMaster)
       .setAppName(appName)

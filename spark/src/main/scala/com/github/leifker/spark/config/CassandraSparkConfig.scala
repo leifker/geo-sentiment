@@ -8,7 +8,7 @@ import com.github.leifker.cassandra.config.CassandraConfig
 case class CassandraSparkConfig(cassandraConfig: CassandraConfig, sparkMaster: String, sparkSettings: List[Tuple2[String, String]])
 
 object CassandraSparkConfig {
-  def apply(cassandraConfig: CassandraConfig, sparkMaster: String = "localhost[2]"): CassandraSparkConfig = {
+  def apply(cassandraConfig: CassandraConfig, sparkMaster: String = "local[2]"): CassandraSparkConfig = {
     new CassandraSparkConfig(
       cassandraConfig,
       sparkMaster,
