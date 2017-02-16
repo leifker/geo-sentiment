@@ -8,10 +8,7 @@ import com.github.leifker.cassandra.AbstractDao;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -30,9 +27,8 @@ public class AmazonCategoryDao extends AbstractDao<String, AmazonCategory> {
 
   public Map<String, String> findRootCategories(Set<String> productIds) throws Exception {
     List<ResultSetFuture> futures = new ArrayList<>();
-    productIds.forEach(key -> futures.add(getSession().executeAsync(accessor.findRootCategoryByProductId(key))));
-    return StreamSupport.stream(Iterables.concat(executeFutures(futures, null).stream()
-        .map(getMapper()::map).collect(Collectors.toList())).spliterator(), false)
+    productIds.forEach(key -> futures.add(getSession().executeAsync(accessor.findRootCategoryByProductId(key).setIdempotent(true))));
+    return streamResults(executeFutures(futures, null))
         .collect(Collectors.toMap(AmazonCategory::getProductId, AmazonCategory::getRootCategory));
   }
 

@@ -4,7 +4,7 @@ task loadAmazonReviews(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   main = 'com.github.leifker.cassandra.sentiment.loader.AmazonReviewLoader'
 
-  args "$file"
+  if (hasProperty("file")) args "$file"
 }
 
 task loadAmazonCategories(type: JavaExec) {
@@ -13,7 +13,7 @@ task loadAmazonCategories(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   main = 'com.github.leifker.cassandra.sentiment.loader.AmazonCategoriesLoader'
 
-  args "$file"
+  if (hasProperty("file")) args "$file"
 }
 
 dependencies {

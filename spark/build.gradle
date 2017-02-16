@@ -3,6 +3,8 @@ apply plugin: 'com.github.johnrengelman.shadow'
 def sparkVersion = '2.0.2'
 
 dependencies {
+  compile project(":cassandra")
+
   // compileOnly - excludes transitives from shadow - provided by cluster
   compileOnly "org.apache.spark:spark-core_2.11:$sparkVersion"
   compileOnly "org.apache.spark:spark-sql_2.11:$sparkVersion"

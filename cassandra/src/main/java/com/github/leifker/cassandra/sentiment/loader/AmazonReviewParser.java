@@ -1,5 +1,7 @@
 package com.github.leifker.cassandra.sentiment.loader;
 
+import com.github.leifker.cassandra.AbstractDao;
+import com.github.leifker.cassandra.CassandraModel;
 import com.github.leifker.cassandra.sentiment.AmazonCategoryDao;
 import com.github.leifker.cassandra.sentiment.AmazonReview;
 import com.github.leifker.cassandra.sentiment.AmazonReviewDao;
@@ -116,8 +118,14 @@ public class AmazonReviewParser {
       Map<String, String> categoryMap = dao.findRootCategories(reviewMap.keySet());
 
       return reviewMap.values().stream().flatMap(List::stream)
-          .map(r -> { r.setRootCategory(categoryMap.get(r.getProductId())); return r; })
-          .collect(Collectors.toList());
+          .map(r -> {
+            if (categoryMap.containsKey(r.getProductId())) {
+              r.setRootCategory(categoryMap.get(r.getProductId()));
+            } else {
+              LOG.warn("Failed to determine root category for productId:" + r.getProductId());
+            }
+            return r;
+          }).collect(Collectors.toList());
 
     } catch (Exception e) {
       throw new RuntimeException(e);

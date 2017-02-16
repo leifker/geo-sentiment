@@ -8,11 +8,11 @@ import com.datastax.driver.mapping.annotations.Transient;
  */
 abstract public class CassandraModel<PK> {
   @Transient
-  protected final String NULL_STRING = "";
+  public static final String NULL_STRING = "";
   @Transient
-  protected final Long NULL_LONG = 0L;
+  public static final Long NULL_LONG = 0L;
   @Transient
-  protected final Integer NULL_INTEGER = 0;
+  public static final Integer NULL_INTEGER = 0;
 
   /**
    * Returns the partition key

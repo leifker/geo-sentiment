@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,7 +50,7 @@ public abstract class AbstractDao<PK, M extends CassandraModel<PK>> {
         .collect(Collectors.groupingBy(CassandraModel::getPartitionKey, Collectors.mapping(Function.identity(), Collectors.toList())))
         .entrySet().forEach(entry -> {
               BatchStatement batch = new BatchStatement();
-              entry.getValue().forEach(model -> batch.add(getMapper().saveQuery(model)));
+              entry.getValue().forEach(model -> batch.add(getMapper().saveQuery(model).setIdempotent(true)));
               futures.add(session.executeAsync(batch));
             }
         );
@@ -62,7 +63,7 @@ public abstract class AbstractDao<PK, M extends CassandraModel<PK>> {
 
   public void deleteByKey(Collection<PK> keys) throws Exception {
     List<ResultSetFuture> futures = new ArrayList<>();
-    keys.forEach(key -> futures.add(session.executeAsync(deleteByPartitionKey(key))));
+    keys.forEach(key -> futures.add(session.executeAsync(deleteByPartitionKey(key).setIdempotent(true))));
     executeFutures(futures, null);
   }
 
@@ -72,9 +73,8 @@ public abstract class AbstractDao<PK, M extends CassandraModel<PK>> {
 
   public Stream<M> streamByKey(Collection<PK> keys) throws Exception {
     List<ResultSetFuture> futures = new ArrayList<>();
-    keys.forEach(key -> futures.add(session.executeAsync(findByPartitionkey(key))));
-    return StreamSupport.stream(Iterables.concat(executeFutures(futures, null).stream()
-        .map(getMapper()::map).collect(Collectors.toList())).spliterator(), false);
+    keys.forEach(key -> futures.add(session.executeAsync(findByPartitionkey(key).setIdempotent(true))));
+    return streamResults(executeFutures(futures, null));
   }
 
   public void createIfNotExists() {
@@ -93,6 +93,13 @@ public abstract class AbstractDao<PK, M extends CassandraModel<PK>> {
     String columnFamily = getMapper().getTableMetadata().getName();
     Statement truncateColumnFamily = new SimpleStatement(String.format("DROP COLUMNFAMILY IF EXISTS %s.%s", keyspace, columnFamily));
     session.execute(truncateColumnFamily);
+  }
+
+  protected Stream<M> streamResults(List<ResultSet> resultSets) {
+    return StreamSupport.stream(
+        Iterables.concat(resultSets.stream().filter(Objects::nonNull)
+            .map(getMapper()::map)
+            .collect(Collectors.toList())).spliterator(), false);
   }
 
   protected static List<ResultSet> executeFutures(List<ResultSetFuture> futureResultSets, Duration timeout) throws Exception {
