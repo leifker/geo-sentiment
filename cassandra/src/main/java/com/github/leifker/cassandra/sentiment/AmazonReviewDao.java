@@ -10,14 +10,14 @@ import org.apache.commons.lang3.tuple.Triple;
 /**
  * Created by dleifker on 2/14/17.
  */
-public class AmazonReviewByCategoryDao extends AbstractDao<Triple<String,Integer,String>, AmazonReviewByCategory> {
-  private final Mapper<AmazonReviewByCategory> mapper;
-  private final AmazonReviewByCategoryAccessor accessor;
+public class AmazonReviewDao extends AbstractDao<Triple<String,Integer,String>, AmazonReview> {
+  private final Mapper<AmazonReview> mapper;
+  private final AmazonReviewAccessor accessor;
 
-  public AmazonReviewByCategoryDao(MappingManager mappingManager) {
+  public AmazonReviewDao(MappingManager mappingManager) {
     super(mappingManager.getSession());
-    this.mapper = Preconditions.checkNotNull(mappingManager).mapper(AmazonReviewByCategory.class);
-    this.accessor = mappingManager.createAccessor(AmazonReviewByCategoryAccessor.class);
+    this.mapper = Preconditions.checkNotNull(mappingManager).mapper(AmazonReview.class);
+    this.accessor = mappingManager.createAccessor(AmazonReviewAccessor.class);
   }
 
   @Override
@@ -31,14 +31,14 @@ public class AmazonReviewByCategoryDao extends AbstractDao<Triple<String,Integer
   }
 
   @Override
-  protected Mapper<AmazonReviewByCategory> getMapper() {
+  protected Mapper<AmazonReview> getMapper() {
     return mapper;
   }
 
   @Override
   public String getDefaultSchema() {
     return "CREATE TABLE IF NOT EXISTS amazon_reviews_by_category (\n" +
-        "    category text,\n" +
+        "    rootcategory text,\n" +
         "    score int,\n" +
         "    productid text,\n" +
         "    time bigint,\n" +
@@ -49,7 +49,7 @@ public class AmazonReviewByCategoryDao extends AbstractDao<Triple<String,Integer
         "    helpfulness text,\n" +
         "    summary text,\n" +
         "    reviewtext text,\n" +
-        "    PRIMARY KEY ((category, score, productid), time, userid, title, price, profilename, helpfulness, summary)\n" +
+        "    PRIMARY KEY ((rootcategory, score, productid), time, userid, title, price, profilename, helpfulness, summary)\n" +
         ") WITH COMPACT STORAGE\n" +
         "    AND CLUSTERING ORDER BY (time DESC, userid ASC, title ASC, price ASC, profilename ASC, helpfulness ASC, summary ASC)\n" +
         "    AND comment = 'Amazon Review Data'\n" +

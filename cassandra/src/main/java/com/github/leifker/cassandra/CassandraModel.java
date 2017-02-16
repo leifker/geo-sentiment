@@ -4,9 +4,9 @@ import com.datastax.driver.mapping.annotations.Transient;
 
 /**
  * Created by dleifker on 2/14/17.
- * @param <P> partition key
+ * @param <PK> partition key
  */
-abstract public class CassandraModel<P> {
+abstract public class CassandraModel<PK> {
   @Transient
   protected final String NULL_STRING = "";
   @Transient
@@ -19,12 +19,12 @@ abstract public class CassandraModel<P> {
    * @return the partition key
    */
   @Transient
-  abstract public P getPartitionKey();
+  abstract public PK getPartitionKey();
 
   /**
    * Sets the partition key
    * @param key to set
    */
   @Transient
-  abstract public void setPartitionKey(P key);
+  abstract public void setPartitionKey(PK key);
 }

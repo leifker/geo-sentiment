@@ -14,6 +14,12 @@ public class CassandraConfig {
   @NotNull
   private String seedHosts = "localhost";
 
+  /**
+   * Default
+   */
+  public CassandraConfig() {
+  }
+
   @JsonCreator
   public CassandraConfig(@JsonProperty("seedHosts") String seedHosts) {
     this.seedHosts = Preconditions.checkNotNull(seedHosts);

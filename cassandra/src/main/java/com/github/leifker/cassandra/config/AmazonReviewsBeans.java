@@ -2,7 +2,8 @@ package com.github.leifker.cassandra.config;
 
 import com.datastax.driver.mapping.MappingManager;
 import com.github.leifker.cassandra.SchemaManager;
-import com.github.leifker.cassandra.sentiment.AmazonReviewByCategoryDao;
+import com.github.leifker.cassandra.sentiment.AmazonCategoryDao;
+import com.github.leifker.cassandra.sentiment.AmazonReviewDao;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -18,14 +19,21 @@ import javax.inject.Named;
 public class AmazonReviewsBeans {
   public static final String AMAZON_REVIEWS = "amazonReviews";
 
+  @Bean
+  @Inject
+  public AmazonReviewDao amazonReviewByCategoryDao(SchemaManager schemaManager, @Named(AMAZON_REVIEWS) KeyspaceConfig keyspaceConfig) {
+    schemaManager.createIfNotExists(keyspaceConfig);
+
+    MappingManager mappingManager = new MappingManager(schemaManager.getKeyspaceSession(keyspaceConfig));
+   return new AmazonReviewDao(mappingManager);
+  }
 
   @Bean
   @Inject
-  public AmazonReviewByCategoryDao amazonReviewByCategoryDao(SchemaManager schemaManager, @Named(AMAZON_REVIEWS) KeyspaceConfig config) {
-    schemaManager.createIfNotExists(config);
+  public AmazonCategoryDao amazonCategoryByProductIdDao(SchemaManager schemaManager, @Named(AMAZON_REVIEWS) KeyspaceConfig keyspaceConfig) {
+    schemaManager.createIfNotExists(keyspaceConfig);
 
-    MappingManager mappingManager = new MappingManager(schemaManager.getKeyspaceSession(config));
-    AmazonReviewByCategoryDao dao = new AmazonReviewByCategoryDao(mappingManager);
-    return dao;
+    MappingManager mappingManager = new MappingManager(schemaManager.getKeyspaceSession(keyspaceConfig));
+    return new AmazonCategoryDao(mappingManager);
   }
 }

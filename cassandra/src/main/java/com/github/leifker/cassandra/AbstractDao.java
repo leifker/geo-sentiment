@@ -20,10 +20,10 @@ import java.util.stream.StreamSupport;
 
 /**
  * Created by dleifker on 2/14/17.
- * @param <P> Partition key
+ * @param <PK> Partition key
  * @param <M> Model
  */
-public abstract class AbstractDao<P, M extends CassandraModel<P>> {
+public abstract class AbstractDao<PK, M extends CassandraModel<PK>> {
   private final Session session;
 
   public AbstractDao(Session session) {
@@ -56,21 +56,21 @@ public abstract class AbstractDao<P, M extends CassandraModel<P>> {
     executeFutures(futures, null);
   }
 
-  public void deleteByKey(P key) throws Exception {
+  public void deleteByKey(PK key) throws Exception {
     deleteByKey(ImmutableList.of(key));
   }
 
-  public void deleteByKey(Collection<P> keys) throws Exception {
+  public void deleteByKey(Collection<PK> keys) throws Exception {
     List<ResultSetFuture> futures = new ArrayList<>();
     keys.forEach(key -> futures.add(session.executeAsync(deleteByPartitionKey(key))));
     executeFutures(futures, null);
   }
 
-  public Stream<M> streamByKey(P key) throws Exception {
+  public Stream<M> streamByKey(PK key) throws Exception {
     return streamByKey(ImmutableList.of(key));
   }
 
-  public Stream<M> streamByKey(Collection<P> keys) throws Exception {
+  public Stream<M> streamByKey(Collection<PK> keys) throws Exception {
     List<ResultSetFuture> futures = new ArrayList<>();
     keys.forEach(key -> futures.add(session.executeAsync(findByPartitionkey(key))));
     return StreamSupport.stream(Iterables.concat(executeFutures(futures, null).stream()
@@ -95,14 +95,18 @@ public abstract class AbstractDao<P, M extends CassandraModel<P>> {
     session.execute(truncateColumnFamily);
   }
 
-  private static List<ResultSet> executeFutures(List<ResultSetFuture> futureResultSets, Duration timeout) throws Exception {
+  protected static List<ResultSet> executeFutures(List<ResultSetFuture> futureResultSets, Duration timeout) throws Exception {
     ListenableFuture<List<ResultSet>> coalesced = Futures.successfulAsList(futureResultSets);
     return timeout == null ? coalesced.get() : coalesced.get(timeout.getSeconds(), TimeUnit.SECONDS);
   }
 
-  protected abstract Statement deleteByPartitionKey(P key);
+  protected Session getSession() {
+    return session;
+  }
 
-  protected abstract Statement findByPartitionkey(P key);
+  protected abstract Statement deleteByPartitionKey(PK key);
+
+  protected abstract Statement findByPartitionkey(PK key);
 
   protected abstract Mapper<M> getMapper();
 

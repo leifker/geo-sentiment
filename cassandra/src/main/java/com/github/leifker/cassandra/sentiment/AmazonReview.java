@@ -13,9 +13,9 @@ import java.util.Objects;
 @Table(name = "amazon_reviews_by_category",
     readConsistency = "ONE",
     writeConsistency = "LOCAL_QUORUM")
-public class AmazonReviewByCategory extends CassandraModel<Triple<String, Integer, String>> {
+public class AmazonReview extends CassandraModel<Triple<String, Integer, String>> {
   @PartitionKey(0)
-  private String category = NULL_STRING;
+  private String rootCategory = NULL_STRING;
   @PartitionKey(1)
   private Integer score = NULL_INTEGER;
   @PartitionKey(2)
@@ -37,29 +37,29 @@ public class AmazonReviewByCategory extends CassandraModel<Triple<String, Intege
 
   private String reviewText;
 
-  public AmazonReviewByCategory() {
+  public AmazonReview() {
   }
 
   @Transient
   @Override
   public Triple<String, Integer, String> getPartitionKey() {
-    return Triple.of(getCategory(), getScore(), getProductId());
+    return Triple.of(getRootCategory(), getScore(), getProductId());
   }
 
   @Transient
   @Override
   public void setPartitionKey(Triple<String, Integer, String> key) {
-    setCategory(key.getLeft());
+    setRootCategory(key.getLeft());
     setScore(key.getMiddle());
     setProductId(key.getRight());
   }
 
-  public String getCategory() {
-    return category;
+  public String getRootCategory() {
+    return rootCategory;
   }
 
-  public void setCategory(String category) {
-    this.category = category;
+  public void setRootCategory(String rootCategory) {
+    this.rootCategory = rootCategory;
   }
 
   public Integer getScore() {
@@ -156,8 +156,8 @@ public class AmazonReviewByCategory extends CassandraModel<Triple<String, Intege
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    AmazonReviewByCategory that = (AmazonReviewByCategory) o;
-    return Objects.equals(category, that.category) &&
+    AmazonReview that = (AmazonReview) o;
+    return Objects.equals(rootCategory, that.rootCategory) &&
         Objects.equals(score, that.score) &&
         Objects.equals(productId, that.productId) &&
         Objects.equals(time, that.time) &&
@@ -172,13 +172,13 @@ public class AmazonReviewByCategory extends CassandraModel<Triple<String, Intege
 
   @Override
   public int hashCode() {
-    return Objects.hash(category, score, productId, time, title, price, userId, profileName, helpfulness, summary, reviewText);
+    return Objects.hash(rootCategory, score, productId, time, title, price, userId, profileName, helpfulness, summary, reviewText);
   }
 
   @Override
   public String toString() {
-    return "AmazonReviewByCategory{" +
-        "category='" + category + '\'' +
+    return "AmazonReview{" +
+        "rootCategory='" + rootCategory + '\'' +
         ", score=" + score +
         ", productId='" + productId + '\'' +
         ", time=" + time +

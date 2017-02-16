@@ -1,0 +1,35 @@
+0000000001
+  Books, Education & Reference, Foreign Language Study & Reference
+  Books, Literature & Fiction, Contemporary
+  Books, Literature & Fiction, Foreign Language Fiction
+  Books, Literature & Fiction, World Literature
+  Books, Science Fiction & Fantasy, Science Fiction
+0000000002
+  Music, Blues
+  Music, Pop
+  Music, R&B
+0000000003
+  Tools & Home Improvement, Lighting & Ceiling Fans, Lamps & Shades, Floor Lamps
+0000000004
+  Music, Classic Rock
+  Music, Pop
+  Music, R&B
+  Music, Soundtracks
+0000000005
+  Sports & Outdoors
+0000000006
+  Books, Law, Criminal Law, Forensic Science
+  Books, New, Used & Rental Textbooks
+0000000007
+  Sports & Outdoors, Hunting & Fishing, Fishing, Lures & Flies
+0000000008
+  Books
+0000000009
+  Music, Jazz
+  Music, Pop
+0000000010
+
+0000000011
+  Movies & TV, Movies
+0000000012
+  Office Products, Office & School Supplies, Cutting & Measuring Devices, Rulers & Tape Measures
