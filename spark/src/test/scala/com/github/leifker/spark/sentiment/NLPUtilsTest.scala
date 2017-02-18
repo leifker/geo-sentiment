@@ -25,44 +25,44 @@ class NLPUtilsTest extends FlatSpec {
 
   it should "mark caps with exclaim" taggedAs(UnitTest) in {
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test.") ==
-      Option(Vector("This", "is", "an", "INTERESTING!", "test", ".")))
+      Option(Vector("this", "is", "an", "interesting!", "test", ".")))
   }
 
   it should "mark sentences with ? and ! when punctuation found as well as all caps" taggedAs(UnitTest) in {
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What TEST is this?") ==
       Option(Vector(
-        "This!", "is!", "an!", "INTERESTING!!", "test!", "!",
-        "What?", "TEST!?", "is?", "this?", "?"
+        "this!", "is!", "an!", "interesting!!", "test!", "!",
+        "what?", "test!?", "is?", "this?", "?"
       )))
   }
 
   it should "mark sentences with ?! or !? when found as well as all caps" taggedAs(UnitTest) in {
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What TEST is this? What is THIS!?!?") ==
       Option(Vector(
-        "This!", "is!", "an!", "INTERESTING!!", "test!", "!",
-        "What?", "TEST!?", "is?", "this?", "?",
-        "What?!", "is?!", "THIS!?!", "?!"
+        "this!", "is!", "an!", "interesting!!", "test!", "!",
+        "what?", "test!?", "is?", "this?", "?",
+        "what?!", "is?!", "this!?!", "?!"
       )))
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What TEST is this? What is THIS?!?!") ==
       Option(Vector(
-        "This!", "is!", "an!", "INTERESTING!!", "test!", "!",
-        "What?", "TEST!?", "is?", "this?", "?",
-        "What?!", "is?!", "THIS!?!", "?!"
+        "this!", "is!", "an!", "interesting!!", "test!", "!",
+        "what?", "test!?", "is?", "this?", "?",
+        "what?!", "is?!", "this!?!", "?!"
       )))
   }
 
   it should "remove duplicate repeated characters" taggedAs(UnitTest) in {
-    assert(NLPUtils.enchancedTokens("Looovvve this test") == Option(Vector("Loovve", "this", "test")))
+    assert(NLPUtils.enchancedTokens("Looovvve this test") == Option(Vector("loovve", "this", "test")))
   }
 
   it should "patch when repeat punctuation" taggedAs(UnitTest) in {
     assert(
       NLPUtils.enchancedTokens("Looooooovvvvvvvve this test!!!!!!!!!!") ==
-        Option(Vector("Loovve!", "this!", "test!", "!")))
+        Option(Vector("loovve!", "this!", "test!", "!")))
   }
 
   "patchTokens" should "pass thru vectors without specified punctuation" taggedAs(UnitTest) in {
-    val testVector = Vector("This", "is", "a", "sentence", "without", "punctuation", "of", "interest", ".")
+    val testVector = Vector("this", "is", "a", "sentence", "without", "punctuation", "of", "interest", ".")
     assert(NLPUtils.patchToken(testVector, "!", s => s + "!") == testVector)
   }
 

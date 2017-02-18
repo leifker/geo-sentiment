@@ -7,7 +7,11 @@ import org.scalatest.FlatSpec
   * Created by dleifker on 2/18/17.
   */
 class NGramUtilsTest extends FlatSpec {
-  "NGramUtils" should "be able to extract uni-grams without stop words" taggedAs(UnitTest) in {
-    assert(NGramUtils.termNgrams("This is not good food", 3, 3) == Set("not good food"))
+  "NGramUtils" should "be able to extract n-grams without stop words" taggedAs(UnitTest) in {
+    assert(NGramUtils.nGrams("This is not good food").toSet == Set("not good food"))
+  }
+
+  it should "respect sentence boundaries" taggedAs(UnitTest) in {
+    assert(NGramUtils.nGrams("This is the worst food ever. Best view of the venue though.").toSet == Set("worst food", "best view venue"))
   }
 }

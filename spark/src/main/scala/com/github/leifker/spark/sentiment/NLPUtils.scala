@@ -25,9 +25,7 @@ object NLPUtils {
       .head
   }
 
-  def stringPreprocess(input: String): String = {
-    removeTriplicate(input)
-  }
+  def stringPreprocess(input: String): String = removeTriplicate(input)
 
   def patchToken(tokens: Vector[String], punctuationTarget: String, mutator: String => String): Vector[String] = {
     patchTokens(tokens, tokens.length - 1, Seq(punctuationTarget), mutator)
@@ -52,8 +50,8 @@ object NLPUtils {
   private def prevPunctuation(tokens: Vector[String], endIdx: Int): Int = tokens.lastIndexWhere(punctuationPattern.matcher(_).matches(), endIdx)
 
   private def markAllCaps(tokens: Vector[String], mutator: String => String): Vector[String] = tokens.map({
-    case str if str.length > 1 && str == str.toUpperCase => mutator(str)
-    case str => str
+    case str if str.length > 1 && str == str.toUpperCase => mutator(str.toLowerCase())
+    case str => str.toLowerCase
   })
 
   private val bothPunctuation = "?!"
