@@ -11,7 +11,7 @@ dependencies {
 
   compile "org.scala-lang:scala-library:$scalaVersion"
   compile 'com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3'
-  compile "com.fasterxml.jackson.module:jackson-module-scala_2.11:$jacksonVersion"
+  compile 'com.peoplepattern:lib-text_2.11:0.3.2'
 
   integrationTestCompile "org.apache.spark:spark-core_2.11:$sparkVersion"
   integrationTestCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"

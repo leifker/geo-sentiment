@@ -12,6 +12,7 @@ class CassandraSparkContext(config: CassandraSparkConfig, appName: String = "Spa
       .setMaster(config.sparkMaster)
       .setAppName(appName)
       .setAll(config.sparkSettings)
+      .setJars(config.sparkJars)
 
   val session = SparkSession.builder()
       .master(config.sparkMaster)

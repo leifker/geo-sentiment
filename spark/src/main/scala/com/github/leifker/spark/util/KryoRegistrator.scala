@@ -2,7 +2,7 @@ package com.github.leifker.spark.util
 
 import com.datastax.spark.connector.{CassandraRow, CassandraRowMetadata}
 import com.esotericsoftware.kryo.Kryo
-import com.github.leifker.cassandra.config.CassandraConfig
+import com.github.leifker.cassandra.config.{CassandraConfig, KeyspaceConfig}
 import org.apache.spark.serializer.{KryoRegistrator => SparkKryoRegistrator}
 
 /**
@@ -11,6 +11,7 @@ import org.apache.spark.serializer.{KryoRegistrator => SparkKryoRegistrator}
 class KryoRegistrator extends SparkKryoRegistrator {
   override def registerClasses(kryo: Kryo) {
     kryo.register(classOf[CassandraConfig])
+    kryo.register(classOf[KeyspaceConfig])
     kryo.register(classOf[Array[CassandraRow]])
     kryo.register(classOf[CassandraRow])
     kryo.register(classOf[CassandraRowMetadata])
