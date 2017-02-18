@@ -74,5 +74,5 @@ object NGramUtils {
     termFilters.forall(existing => existing.indexOfSlice(window) == -1)
   }
 
-  private val punctuationPattern = Pattern.compile("""["“”‘’'.?!…,:;»«()]+""")
+  private val punctuationPattern = Pattern.compile("""["“”‘’'.?!…,:;»«()&]+""")
 }
