@@ -31,23 +31,23 @@ class NLPUtilsTest extends FlatSpec {
   it should "mark sentences with ? and ! when punctuation found as well as all caps" taggedAs(UnitTest) in {
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What TEST is this?") ==
       Option(Vector(
-        "This!", "is!", "an!", "INTERESTING!!", "test!",
-        "What?", "TEST!?", "is?", "this?"
+        "This!", "is!", "an!", "INTERESTING!!", "test!", "!",
+        "What?", "TEST!?", "is?", "this?", "?"
       )))
   }
 
   it should "mark sentences with ?! or !? when found as well as all caps" taggedAs(UnitTest) in {
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What TEST is this? What is THIS!?!?") ==
       Option(Vector(
-        "This!", "is!", "an!", "INTERESTING!!", "test!",
-        "What?", "TEST!?", "is?", "this?",
-        "What?!", "is?!", "THIS!?!"
+        "This!", "is!", "an!", "INTERESTING!!", "test!", "!",
+        "What?", "TEST!?", "is?", "this?", "?",
+        "What?!", "is?!", "THIS!?!", "?!"
       )))
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What TEST is this? What is THIS?!?!") ==
       Option(Vector(
-        "This!", "is!", "an!", "INTERESTING!!", "test!",
-        "What?", "TEST!?", "is?", "this?",
-        "What?!", "is?!", "THIS!?!"
+        "This!", "is!", "an!", "INTERESTING!!", "test!", "!",
+        "What?", "TEST!?", "is?", "this?", "?",
+        "What?!", "is?!", "THIS!?!", "?!"
       )))
   }
 
@@ -58,7 +58,7 @@ class NLPUtilsTest extends FlatSpec {
   it should "patch when repeat punctuation" taggedAs(UnitTest) in {
     assert(
       NLPUtils.enchancedTokens("Looooooovvvvvvvve this test!!!!!!!!!!") ==
-        Option(Vector("Loovve!", "this!", "test!")))
+        Option(Vector("Loovve!", "this!", "test!", "!")))
   }
 
   "patchTokens" should "pass thru vectors without specified punctuation" taggedAs(UnitTest) in {
@@ -75,21 +75,21 @@ class NLPUtilsTest extends FlatSpec {
     val testVector = Vector("This", "is", "a", "sentence", "of", "interest", "!")
     assert(
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
-        Vector("This!", "is!", "a!", "sentence!", "of!", "interest!"))
+        Vector("This!", "is!", "a!", "sentence!", "of!", "interest!", "!"))
   }
 
   it should "patch when repeat punctuation" taggedAs(UnitTest) in {
     val testVector = Vector("This", "is", "a", "sentence", "of", "interest", "!", "!", "!")
     assert(
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
-        Vector("This!", "is!", "a!", "sentence!", "of!", "interest!", "!", "!"))
+        Vector("This!", "is!", "a!", "sentence!", "of!", "interest!", "!", "!", "!"))
   }
 
   it should "patch when duplicate punctuation no previous punctuation" taggedAs(UnitTest) in {
     val testVector = Vector("This", "is", "a", "sentence", "of", "interest", "!")
     assert(
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
-        Vector("This!", "is!", "a!", "sentence!", "of!", "interest!"))
+        Vector("This!", "is!", "a!", "sentence!", "of!", "interest!", "!"))
   }
 
   it should "patch only the target sentence when previous sentence is present" taggedAs(UnitTest) in {
@@ -100,7 +100,7 @@ class NLPUtilsTest extends FlatSpec {
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
         Vector(
           "This", "is", "not", "patched", ".",
-          "This!", "is!", "a!", "sentence!", "of!", "interest!"))
+          "This!", "is!", "a!", "sentence!", "of!", "interest!", "!"))
   }
 
   it should "patch only the target sentence when following sentence is present" taggedAs(UnitTest) in {
@@ -110,7 +110,7 @@ class NLPUtilsTest extends FlatSpec {
     assert(
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
         Vector(
-          "This!", "is!", "a!", "sentence!", "of!", "interest!",
+          "This!", "is!", "a!", "sentence!", "of!", "interest!", "!",
           "This", "is", "not", "patched", "."))
   }
 
@@ -123,7 +123,7 @@ class NLPUtilsTest extends FlatSpec {
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
         Vector(
           "This", "is", "not", "patched", ".",
-          "This!", "is!", "a!", "sentence!", "of!", "interest!",
+          "This!", "is!", "a!", "sentence!", "of!", "interest!", "!",
           "This", "is", "not", "patched", "."))
   }
 
@@ -136,9 +136,9 @@ class NLPUtilsTest extends FlatSpec {
     assert(
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
         Vector("This", "is", "not", "patched", ".",
-          "This!", "is!", "a!", "sentence!", "of!", "interest!",
+          "This!", "is!", "a!", "sentence!", "of!", "interest!", "!",
           "This", "is", "not", "patched", ".",
-          "This!", "is!", "a!", "sentence!", "of!", "interest!"))
+          "This!", "is!", "a!", "sentence!", "of!", "interest!", "!"))
   }
 
   it should "patch multiple target sentences" taggedAs(UnitTest) in {
@@ -148,7 +148,7 @@ class NLPUtilsTest extends FlatSpec {
     assert(
       NLPUtils.patchToken(testVector, "!", s => s + "!") ==
         Vector(
-          "This!", "is!", "a!", "sentence!", "of!", "interest!",
-          "This!", "is!", "a!", "sentence!", "of!", "interest!"))
+          "This!", "is!", "a!", "sentence!", "of!", "interest!", "!",
+          "This!", "is!", "a!", "sentence!", "of!", "interest!", "!"))
   }
 }

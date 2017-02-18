@@ -39,7 +39,7 @@ object NLPUtils {
       val prevPunctIdx = prevPunctuation(tokens, lastIdx - 1)
       val startPatchIdx = prevPunctIdx + punctuationTarget.size
       val nextTokens = lastIdx - startPatchIdx match {
-        case diff if diff > 0 => tokens.patch(startPatchIdx, tokens.slice(startPatchIdx, lastIdx).map(mutator), diff + punctuationTarget.size)  // +removes the punct token
+        case diff if diff > 0 => tokens.patch(startPatchIdx, tokens.slice(startPatchIdx, lastIdx).map(mutator), diff)
         case _ => tokens
       }
       patchTokens(nextTokens, prevPunctIdx, punctuationTarget, mutator)
