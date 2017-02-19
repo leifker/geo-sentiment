@@ -37,12 +37,12 @@ class NLPUtilsTest extends FlatSpec {
   }
 
   it should "mark sentences with ?! or !? when found as well as all caps" taggedAs(UnitTest) in {
-    /*assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What LOVELY test is this? Is this test AWESOME!?!?") ==
+    assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What LOVELY test is this? Is this test AWESOME!?!?") ==
       Option(Vector(
         "interesting!!", "!",
         "lovely!?", "?",
         "awesome!?!", "?!"
-      ))) */
+      )))
     assert(NLPUtils.enchancedTokens("This is an INTERESTING test ! What LOVELY test is this? Is this test AWESOME?!?!") ==
       Option(Vector(
         "interesting!!", "!",
