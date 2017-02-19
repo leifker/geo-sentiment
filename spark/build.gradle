@@ -1,6 +1,7 @@
 apply plugin: 'com.github.johnrengelman.shadow'
 
 def sparkVersion = '2.0.2'
+def stanfordVersion = '3.7.0'
 
 dependencies {
   compile project(":cassandra")
@@ -12,6 +13,8 @@ dependencies {
   compile "org.scala-lang:scala-library:$scalaVersion"
   compile 'com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3'
   compile 'com.peoplepattern:lib-text_2.11:0.3.2'
+  compile ":stanford-postagger:$stanfordVersion"
+  compile "edu.stanford.nlp:stanford-corenlp:$stanfordVersion"
 
   integrationTestCompile "org.apache.spark:spark-core_2.11:$sparkVersion"
   integrationTestCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"
