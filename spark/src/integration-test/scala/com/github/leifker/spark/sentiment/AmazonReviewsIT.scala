@@ -16,7 +16,7 @@ class AmazonReviewsIT extends FlatSpec {
     .cache()
 
   "Spark" should "be able to process text reviews of sample rows" taggedAs(ITest, Slow) in {
-    electronicsReviews.foreach(row => NLPUtils.enchancedTokens(row.getString("reviewtext")))
+    electronicsReviews.foreach(row => NLPUtils.enhancedTokens(row.getString("reviewtext")))
   }
 
   it should "be able get at least a 500 sample" taggedAs(ITest, Slow) in {

@@ -14,29 +14,35 @@ import scala.collection.mutable.{ListBuffer, Buffer => MBuffer}
   * Created by dleifker on 2/16/17.
   */
 object NLPUtils {
+  private val allPunctuation = Pattern.compile("""[\p{Punct}]+""")
+  private val exclaimQuestion = "?!"
+
   lazy val enBundle: LangBundle = LangBundle.bundleForLang(Option("en"))
   lazy val tagger: MaxentTagger = new MaxentTagger("models/english-caseless-left3words-distsim.tagger")
 
-  val isEnglish = (text: String) => text.lang == Some("en")
-  val isHashTag = (text: String) => text.startsWith("#")
+  val isEnglish = (text: String) => text.lang.contains("en")
 
   def tokenize(text: String) = stringPreprocess(text).tokens
 
-  def enchancedTokens(tokens: Vector[String]) = processEnhancedTokens(tokens)
-  def enchancedTokens(text: String): Option[Seq[String]] = if (isEnglish(text)) Option(enchancedTokens(tokenize(text))) else Option.empty
+  def enhancedTokens(tokens: Vector[String]) = processEnhancedTokens(tokens)
+  def enhancedTokens(text: String): Option[Seq[String]] = if (isEnglish(text)) Option(enhancedTokens(tokenize(text))) else Option.empty
 
   def hashTagTokens(tokens: Vector[String]): Vector[String] = {
-    tokens.filter(isHashTag).map(_.toLowerCase)
+    tokens.filter(enBundle.isHashtag).map(_.toLowerCase)
+  }
+
+  def emojiTokens(tokens: Vector[String]): Vector[String] = {
+    tokens.filter(Emoji.isEmoji)
   }
 
   def processEnhancedTokens(tokens: Vector[String]): Vector[String] = {
-    Seq(tokens.filter(!isHashTag(_)))
+    Seq(tokens.filter(token => !enBundle.isHashtag(token) && !Emoji.isEmoji(token)))
       .map(withAndAsDelimiter)
       .map(collapsePunctuation)
       .map(posFilter)
       .map(_.filter(word => !enBundle.stopwords(word.toLowerCase)))
       .map(markAllCaps(_, _ + "!").map(_.toLowerCase()))  // mark caps then drop case
-      .map(patchToken(_, bothPunctuation, _ + bothPunctuation))
+      .map(patchToken(_, exclaimQuestion, _ + exclaimQuestion))
       .map(patchToken(_, "?", _ + "?"))
       .map(patchToken(_, "!", _ + "!"))
       .head
@@ -118,18 +124,16 @@ object NLPUtils {
     })
   }
 
-  private val punctuationPattern = Pattern.compile("""[\p{Punct}]+""")
   private def markAllCaps(tokens: Vector[String], mutator: String => String): Vector[String] = tokens.map({
-    case str if str.length > 1 && !punctuationPattern.matcher(str).matches() && str == str.toUpperCase => mutator(str)
+    case str if str.length > 1 && !allPunctuation.matcher(str).matches() && str == str.toUpperCase => mutator(str)
     case str => str
   })
 
-  private val bothPunctuation = "?!"
   private val collapsable: Set[String]  = Set("!", "?")
   private def collapsePunctuation(input: Vector[String]): Vector[String] = {
     (ListBuffer[String]() /: input){
-      case (a, b) if a.nonEmpty && collapsable.contains(b) && (a.last == b || a.last == bothPunctuation) => a
-      case (a, b) if a.nonEmpty && collapsable.contains(a.last) && collapsable.contains(b) => a.trimEnd(1); a += bothPunctuation
+      case (a, b) if a.nonEmpty && collapsable.contains(b) && (a.last == b || a.last == exclaimQuestion) => a
+      case (a, b) if a.nonEmpty && collapsable.contains(a.last) && collapsable.contains(b) => a.trimEnd(1); a += exclaimQuestion
       case (a, b) => a += b
     }.toVector
   }

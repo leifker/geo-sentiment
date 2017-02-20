@@ -23,15 +23,16 @@ class NGramUtilsTest extends FlatSpec {
   }
 
   it should "preserve emoticons" taggedAs(UnitTest) in {
-    assert(NGramUtils.nGrams("This is the worst food ever :-(").toSet.contains(":-)"))
-    assert(NGramUtils.nGrams("This is the worst food ever :-)").toSet.contains(":-("))
-    assert(NGramUtils.nGrams("This is the worst food ever ;‑)").toSet.contains(";‑)"))
+    assert(NGramUtils.nGrams("This is the worst food ever :-(").toSet.contains(":-("))
+    assert(NGramUtils.nGrams("This is the worst food ever :-)").toSet.contains(":-)"))
+    assert(NGramUtils.nGrams("This is the worst food ever ;-)").toSet.contains(";-)"))
     assert(NGramUtils.nGrams("This is the worst food ever :-))").toSet.contains(":-))"))
   }
 
   it should "preserve hashtags as individual terms" taggedAs(UnitTest) in {
-    assert(NGramUtils.nGrams("This is the worst food ever #winning #LOL").toSet.contains("#winning"))
-    assert(NGramUtils.nGrams("This is the worst food ever #winning #LOL").toSet.contains("#lol"))
+    val terms = NGramUtils.nGrams("This is the worst food ever #winning #LOL").toSet
+    assert(terms.contains("#winning"))
+    assert(terms.contains("#lol"))
   }
 
   it should "handle this example A" taggedAs(UnitTest) in {

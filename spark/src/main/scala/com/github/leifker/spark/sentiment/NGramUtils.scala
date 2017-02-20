@@ -1,7 +1,5 @@
 package com.github.leifker.spark.sentiment
 
-import com.github.leifker.spark.sentiment
-
 import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
 
 /**
@@ -17,8 +15,9 @@ object NGramUtils {
   def nGrams(text: String): Seq[String] = {
     val tokens = NLPUtils.tokenize(text)
     val hashTagTokens = NLPUtils.hashTagTokens(tokens)
-    val enhancedTokens = if (NLPUtils.isEnglish(text)) termNgrams(NLPUtils.enchancedTokens(tokens), 1, 3) else Seq.empty
-    enhancedTokens ++ hashTagTokens
+    val emoijTokens = NLPUtils.emojiTokens(tokens)
+    val enhancedTokens = if (NLPUtils.isEnglish(text)) termNgrams(NLPUtils.enhancedTokens(tokens), 1, 3) else Seq.empty
+    enhancedTokens ++ hashTagTokens ++ emoijTokens
   }
 
   private def termNgrams(tokens: Seq[String], min: Int, max: Int): Seq[String] = {
