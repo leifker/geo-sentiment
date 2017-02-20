@@ -61,6 +61,12 @@ class NLPUtilsTest extends FlatSpec {
         Option(Vector("loovve!", "!")))
   }
 
+  it should "should handle missing spaces" taggedAs(UnitTest) in {
+    assert(
+      NLPUtils.enchancedTokens("This is the most interesting test I've every taken.It is clearly the best test ever.") ==
+        Option(Vector("interesting", ".", "best", ".")))
+  }
+
   "patchTokens" should "pass thru vectors without specified punctuation" taggedAs(UnitTest) in {
     val testVector = Vector("this", "is", "a", "sentence", "without", "punctuation", "of", "interest", ".")
     assert(NLPUtils.patchToken(testVector, "!", s => s + "!") == testVector)

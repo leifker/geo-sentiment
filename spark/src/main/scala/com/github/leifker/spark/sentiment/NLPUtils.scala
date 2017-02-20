@@ -18,14 +18,20 @@ object NLPUtils {
   lazy val tagger: MaxentTagger = new MaxentTagger("models/english-caseless-left3words-distsim.tagger")
 
   val isEnglish = (text: String) => text.lang == Some("en")
+  val isHashTag = (text: String) => text.startsWith("#")
 
-  val enchancedTokens = (text: String) => text match {
-    case in if isEnglish(in) => Option(tokenPreprocess(stringPreprocess(text).tokens))
-    case _ => Option.empty
+  def tokenize(text: String) = stringPreprocess(text).tokens
+
+  def enchancedTokens(tokens: Vector[String]) = processEnhancedTokens(tokens)
+  def enchancedTokens(text: String): Option[Seq[String]] = if (isEnglish(text)) Option(enchancedTokens(tokenize(text))) else Option.empty
+
+  def hashTagTokens(tokens: Vector[String]): Vector[String] = {
+    tokens.filter(isHashTag).map(_.toLowerCase)
   }
 
-  def tokenPreprocess(tokens: Vector[String]): Vector[String] = {
-    Seq(tokens)
+  def processEnhancedTokens(tokens: Vector[String]): Vector[String] = {
+    Seq(tokens.filter(!isHashTag(_)))
+      .map(withAndAsDelimiter)
       .map(collapsePunctuation)
       .map(posFilter)
       .map(_.filter(word => !enBundle.stopwords(word.toLowerCase)))
@@ -41,13 +47,14 @@ object NLPUtils {
   def posFilter(tokens: Seq[String]): Vector[String] = {
     stanfordTaggedSentences(tokens)
       .map(sentence =>
-        sentence.filter(tagWord => !tagWord.tag().startsWith("NN") || punctuationPattern.matcher(tagWord.word()).matches())
-          .filter(!_.tag().startsWith("WP"))
-          .filter(_.tag() != "DT")
+        sentence
+          .filter(tagWord => !tagWord.tag().startsWith("NN") || sentenceDelimiterPattern.matcher(tagWord.word()).matches())
+          .filter(tagWord => !tagWord.tag().startsWith("WP") || !tagWord.tag().startsWith("PRP"))
+          .filter(tagWord => !Set("DT", "MD", "CD", "IN", "POS").contains(tagWord.tag()))
           .map(_.word)
       )
       .filter(_.nonEmpty)
-      .filter(sentence => sentence.size > 1 || !punctuationPattern.matcher(sentence.head).matches())
+      .filter(sentence => sentence.size > 1 || !sentenceDelimiterPattern.matcher(sentence.head).matches())
       .flatMap(_.iterator)
       .toVector
   }
@@ -63,7 +70,7 @@ object NLPUtils {
     val seqs = MBuffer.empty[Vector[String]]
     val thisbf = MBuffer.empty[String]
     for (token <- tokens) {
-      if (!punctuationPattern.matcher(token).matches()) {
+      if (!sentenceDelimiterPattern.matcher(token).matches()) {
         thisbf += token
       } else {
         if (includePunctuation) {
@@ -80,10 +87,6 @@ object NLPUtils {
       seqs += thisbf.toVector
     }
     seqs
-  }
-
-  def socialTerms(tokens: Seq[String]): Seq[String] = {
-    tokens.filter(w => enBundle.isMention(w) || enBundle.isHashtag(w)).distinct
   }
 
   def patchToken(tokens: Vector[String], punctuationTarget: String, mutator: String => String): Vector[String] = {
@@ -105,9 +108,17 @@ object NLPUtils {
     }
   }
 
-  private val punctuationPattern = Pattern.compile("""[.?!]+""")
-  private def prevPunctuation(tokens: Vector[String], endIdx: Int): Int = tokens.lastIndexWhere(punctuationPattern.matcher(_).matches(), endIdx)
+  private val sentenceDelimiterPattern = Pattern.compile("""[.?!,&#]+""")
+  private def prevPunctuation(tokens: Vector[String], endIdx: Int): Int = tokens.lastIndexWhere(sentenceDelimiterPattern.matcher(_).matches(), endIdx)
 
+  private def withAndAsDelimiter(tokens: Vector[String]): Vector[String] = {
+    tokens.map({
+      case word if word.equalsIgnoreCase("and") => "&"
+      case word => word
+    })
+  }
+
+  private val punctuationPattern = Pattern.compile("""[\p{Punct}]+""")
   private def markAllCaps(tokens: Vector[String], mutator: String => String): Vector[String] = tokens.map({
     case str if str.length > 1 && !punctuationPattern.matcher(str).matches() && str == str.toUpperCase => mutator(str)
     case str => str

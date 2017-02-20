@@ -1,6 +1,6 @@
 package com.github.leifker.spark.sentiment
 
-import java.util.regex.Pattern
+import com.github.leifker.spark.sentiment
 
 import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
 
@@ -15,12 +15,10 @@ object NGramUtils {
     * @return grams
     */
   def nGrams(text: String): Seq[String] = {
-    NLPUtils.enchancedTokens(text) match {
-      case Some(tokens) => {
-        NLPUtils.socialTerms(tokens) ++ termNgrams(tokens, 1, 3)
-      }
-      case None => Seq.empty
-    }
+    val tokens = NLPUtils.tokenize(text)
+    val hashTagTokens = NLPUtils.hashTagTokens(tokens)
+    val enhancedTokens = if (NLPUtils.isEnglish(text)) termNgrams(NLPUtils.enchancedTokens(tokens), 1, 3) else Seq.empty
+    enhancedTokens ++ hashTagTokens
   }
 
   private def termNgrams(tokens: Seq[String], min: Int, max: Int): Seq[String] = {
@@ -48,6 +46,4 @@ object NGramUtils {
   private def noIndexSlice(termFilters: MSet[Vector[String]], window: Vector[String]): Boolean = {
     termFilters.forall(existing => existing.indexOfSlice(window) == -1)
   }
-
-  private val punctuationPattern = Pattern.compile("""["“”‘’'.?!…,:;»«()&]+""")
 }
