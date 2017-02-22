@@ -14,7 +14,7 @@ import scala.collection.mutable.{ListBuffer, Buffer => MBuffer}
   * Created by dleifker on 2/16/17.
   */
 object NLPUtils {
-  private val allPunctuation = Pattern.compile("""[\p{Punct}]+""")
+  val allPunctuation = Pattern.compile("""^[\p{Punct}]+""")
   private val exclaimQuestion = "?!"
 
   lazy val enBundle: LangBundle = LangBundle.bundleForLang(Option("en"))

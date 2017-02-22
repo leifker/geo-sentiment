@@ -1,11 +1,14 @@
 package com.github.leifker.spark.sentiment
 
+import java.util.regex.Pattern
+
 import scala.collection.mutable.{Buffer => MBuffer, Set => MSet}
 
 /**
   * Created by dleifker on 2/18/17.
   */
 object NGramUtils {
+  private val minTokenSize = 2;
   /**
     * Considers social terms plus uni-grams, bi-grams, tri-grams (the grams are not subsets of the larger grams)
     * Preserves ordering of the grams and their frequency
@@ -39,10 +42,19 @@ object NGramUtils {
       termNgrams.map(_.mkString(" "))
     }
 
-    NLPUtils.sentences(tokens, false).flatMap(seq => partialSeqSet(seq, min, max))
+    NLPUtils.sentences(tokens, false)
+      .map(sentence => sentence.filter(ngramTokenFilter))
+      .flatMap(seq => partialSeqSet(seq, min, max))
   }
 
   private def noIndexSlice(termFilters: MSet[Vector[String]], window: Vector[String]): Boolean = {
     termFilters.forall(existing => existing.indexOfSlice(window) == -1)
+  }
+
+  val htmlEntity = Pattern.compile("""^&\w+;$""")
+  private def ngramTokenFilter(word: String): Boolean = {
+    word.length >= minTokenSize &&
+    !NLPUtils.allPunctuation.matcher(word).matches() &&
+    !htmlEntity.matcher(word).matches()
   }
 }
