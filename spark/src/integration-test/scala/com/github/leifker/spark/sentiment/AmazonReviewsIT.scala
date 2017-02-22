@@ -1,7 +1,6 @@
 package com.github.leifker.spark.sentiment
 
-import com.github.leifker.spark.AmazonReviewsTestContext
-import com.github.leifker.spark.test.ITest
+import com.github.leifker.spark.test.{ITest, ITestContext}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
@@ -15,15 +14,16 @@ import org.scalatest.tagobjects.Slow
   * Created by dleifker on 2/16/17.
   */
 class AmazonReviewsIT extends FlatSpec {
-  val oneStarReviews = AmazonReviewsTestContext.amazonReviews.oneStarElectronics
+  val amazonReviews = AmazonReviews(ITestContext.localConfig, ITestContext.amazonReviewsKeyspace, "IntegrationTest")
+  val oneStarReviews = amazonReviews.oneStarElectronics
     .sample(false, 0.2)
     .cache()
-  val fiveStarReviews = AmazonReviewsTestContext.amazonReviews.fiveStarElectronics
+  val fiveStarReviews = amazonReviews.fiveStarElectronics
     .sample(false, 0.2)
     .cache()
 
-  val sampleReviews: Dataset[Row] = AmazonReviewsTestContext.amazonReviews.oneStarElectronics.sample(false, 0.007)
-    .union(AmazonReviewsTestContext.amazonReviews.fiveStarElectronics.sample(false, 0.007))
+  val sampleReviews: Dataset[Row] = amazonReviews.oneStarElectronics.sample(false, 0.007)
+    .union(amazonReviews.fiveStarElectronics.sample(false, 0.007))
 
   "Spark" should "be able to process text reviews of sample rows" taggedAs(ITest, Slow) in {
     sampleReviews.foreach(row => NLPUtils.enhancedTokens(row.getAs[String]("text")))

@@ -52,6 +52,10 @@ shadowJar {
   }
 }
 
+
+// for cluster integration tests
+integrationTest.dependsOn(shadowJar)
+
 sourceSets {
   integrationTest {
     scala {
