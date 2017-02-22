@@ -50,7 +50,7 @@ public abstract class AbstractDao<PK, M extends CassandraModel<PK>> {
         .collect(Collectors.groupingBy(CassandraModel::getPartitionKey, Collectors.mapping(Function.identity(), Collectors.toList())))
         .entrySet().forEach(entry -> {
               BatchStatement batch = new BatchStatement();
-              entry.getValue().forEach(model -> batch.add(getMapper().saveQuery(model).setIdempotent(true)));
+              entry.getValue().forEach(model -> batch.add(getMapper().saveQuery(model)));
               futures.add(session.executeAsync(batch));
             }
         );

@@ -15,29 +15,33 @@ import org.scalatest.tagobjects.Slow
   * Created by dleifker on 2/16/17.
   */
 class AmazonReviewsIT extends FlatSpec {
-  val reviews = AmazonReviewsTestContext.amazonReviews.extremePosNegElectronicsReviews
-    .limit(100000)
-    .coalesce(12)
+  val oneStarReviews = AmazonReviewsTestContext.amazonReviews.oneStarElectronics
+    .sample(false, 0.2)
     .cache()
-  val sampleReviews: Dataset[Row] = reviews.sample(false, 0.01)
+  val fiveStarReviews = AmazonReviewsTestContext.amazonReviews.fiveStarElectronics
+    .sample(false, 0.2)
+    .cache()
+
+  val sampleReviews: Dataset[Row] = AmazonReviewsTestContext.amazonReviews.oneStarElectronics.sample(false, 0.007)
+    .union(AmazonReviewsTestContext.amazonReviews.fiveStarElectronics.sample(false, 0.007))
 
   "Spark" should "be able to process text reviews of sample rows" taggedAs(ITest, Slow) in {
     sampleReviews.foreach(row => NLPUtils.enhancedTokens(row.getAs[String]("text")))
   }
 
   it should "be able get at least a 500 sample" taggedAs(ITest, Slow) in {
-    assert(sampleReviews.count() >= 500)
+    assert(sampleReviews.count() >= 1000)
   }
 
   it should "be able to tokenize" taggedAs(ITest, Slow) in {
     val tokenizer = new ReviewTokenizer().setInputCol("text").setOutputCol("words")
-    val tokenized = tokenizer.transform(reviews)
+    val tokenized = tokenizer.transform(oneStarReviews)
     assert(tokenized.select("words", "score").take(1000).length == 1000)
   }
 
   it should "vectorize" taggedAs(ITest, Slow) in {
     val tokenizer = new ReviewTokenizer().setInputCol("text").setOutputCol("words")
-    val tokenized = tokenizer.transform(reviews.limit(1000))
+    val tokenized = tokenizer.transform(oneStarReviews.limit(1000))
     val cvModel: CountVectorizerModel = new CountVectorizer()
       .setInputCol("words")
       .setOutputCol("features")
@@ -58,7 +62,7 @@ class AmazonReviewsIT extends FlatSpec {
       .setInputCol(tokenizer.getOutputCol)
       .setOutputCol("features")
     val lr = new LogisticRegression()
-      .setMaxIter(5)
+      .setMaxIter(10)
     val pipeline = new Pipeline()
       .setStages(Array(tokenizer, binarizer, hashingTF, lr))
 
@@ -78,9 +82,9 @@ class AmazonReviewsIT extends FlatSpec {
       .setNumFolds(2)  // Use 3+ in practice
 
     // Run cross-validation, and choose the best set of parameters.
-    val cvModel = cv.fit(reviews)
+    val cvModel = cv.fit(oneStarReviews.union(fiveStarReviews))
 
     // Make predictions on test documents. cvModel uses the best model found (lrModel).
-    cvModel.transform(sampleReviews).show(500)
+    cvModel.transform(sampleReviews.sample(false, 0.1)).show(Math.ceil(sampleReviews.count() * 0.1).toInt)
   }
 }

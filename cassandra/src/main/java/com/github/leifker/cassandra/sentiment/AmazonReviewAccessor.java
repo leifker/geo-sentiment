@@ -11,11 +11,11 @@ import com.datastax.driver.mapping.annotations.QueryParameters;
  */
 @Accessor
 public interface AmazonReviewAccessor {
-  @Query("SELECT * FROM amazon_reviews_by_category WHERE rootcategory = :rootcategory AND score = :score AND productid = :productid")
+  @Query("SELECT * FROM amazon_reviews_by_category_score WHERE rootcategory = :rootcategory AND score = :score")
   @QueryParameters(consistency = "ONE")
-  Statement findByPartitionKey(@Param("rootcategory") String category, @Param("score") Integer score, @Param("productid") String productid);
+  Statement findByPartitionKey(@Param("rootcategory") String category, @Param("score") Integer score);
 
-  @Query("DELETE FROM amazon_reviews_by_category WHERE rootcategory = :rootcategory AND score = :score AND productid = :productid")
+  @Query("DELETE FROM amazon_reviews_by_category_score WHERE rootcategory = :rootcategory AND score = :score")
   @QueryParameters(consistency = "ONE")
-  Statement deleteByPartitionkey(@Param("rootcategory") String category, @Param("score") Integer score, @Param("productid") String productid);
+  Statement deleteByPartitionkey(@Param("rootcategory") String category, @Param("score") Integer score);
 }

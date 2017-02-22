@@ -45,7 +45,7 @@ public class AmazonReviewParser {
     AtomicLong modelCount = new AtomicLong();
     Iterators.partition(br.lines().iterator(), batchSize * linesPerRecord)
         .forEachRemaining(lines -> {
-          List<AmazonReview> batch = new ArrayList<>();
+          List<AmazonReview> batch = new ArrayList<>(batchSize);
 
           int idx = 0;
           AmazonReview model = null;
@@ -117,7 +117,8 @@ public class AmazonReviewParser {
           .collect(Collectors.groupingBy(AmazonReview::getProductId, Collectors.mapping(Function.identity(), Collectors.toList())));
       Map<String, String> categoryMap = dao.findRootCategories(reviewMap.keySet());
 
-      return reviewMap.values().stream().flatMap(List::stream)
+      return reviewMap.values().stream()
+          .flatMap(List::stream)
           .map(r -> {
             if (categoryMap.containsKey(r.getProductId())) {
               r.setRootCategory(categoryMap.get(r.getProductId()));

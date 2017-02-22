@@ -2,7 +2,7 @@ package com.github.leifker.cassandra.sentiment;
 
 import com.github.mirreck.FakeFactory;
 import com.github.mirreck.RandomUtils;
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit;
 /**
  * Created by dleifker on 2/14/17.
  */
-public class AmazonReviewTest extends AbstractDaoTest<Triple<String, Integer, String>, AmazonReview, AmazonReviewDao> {
+public class AmazonReviewTest extends AbstractDaoTest<Pair<String, Integer>, AmazonReview, AmazonReviewDao> {
   private final static FakeFactory FAKER = new FakeFactory();
 
   @Inject
@@ -25,7 +25,8 @@ public class AmazonReviewTest extends AbstractDaoTest<Triple<String, Integer, St
   @Override
   public AmazonReview getRandom() {
     AmazonReview model = new AmazonReview();
-    model.setPartitionKey(Triple.of(FAKER.letters(10), RandomUtils.intInInterval(0, 5), FAKER.bothify("####-????-#####")));
+    model.setPartitionKey(Pair.of(FAKER.letters(10), RandomUtils.intInInterval(0, 5)));
+    model.setProductId(FAKER.bothify("####-????-#####"));
     model.setHelpfulness(String.format("%s/10", RandomUtils.intInInterval(0, 10)));
     model.setUserId(FAKER.numerify("###########"));
     model.setProfileName(FAKER.firstName());

@@ -2,7 +2,7 @@ package com.github.leifker.cassandra.sentiment;
 
 import com.datastax.driver.mapping.annotations.*;
 import com.github.leifker.cassandra.CassandraModel;
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -10,29 +10,29 @@ import java.util.Objects;
 /**
  * Created by dleifker on 2/14/17.
  */
-@Table(name = "amazon_reviews_by_category",
+@Table(name = "amazon_reviews_by_category_score",
     readConsistency = "ONE",
     writeConsistency = "LOCAL_QUORUM")
-public class AmazonReview extends CassandraModel<Triple<String, Integer, String>> {
+public class AmazonReview extends CassandraModel<Pair<String, Integer>> {
   @PartitionKey(0)
   private String rootCategory = NULL_STRING;
   @PartitionKey(1)
   private Integer score = NULL_INTEGER;
-  @PartitionKey(2)
-  private String productId = NULL_STRING;
   @ClusteringColumn(0)
   private Long time = NULL_LONG;
   @ClusteringColumn(1)
-  private String title = NULL_STRING;
+  private String productId = NULL_STRING;
   @ClusteringColumn(2)
-  private String price = NULL_STRING;
+  private String title = NULL_STRING;
   @ClusteringColumn(3)
-  private String userId = NULL_STRING;
+  private String price = NULL_STRING;
   @ClusteringColumn(4)
-  private String profileName = NULL_STRING;
+  private String userId = NULL_STRING;
   @ClusteringColumn(5)
-  private String helpfulness = NULL_STRING;
+  private String profileName = NULL_STRING;
   @ClusteringColumn(6)
+  private String helpfulness = NULL_STRING;
+  @ClusteringColumn(7)
   private String summary = NULL_STRING;
 
   private String reviewText;
@@ -42,16 +42,15 @@ public class AmazonReview extends CassandraModel<Triple<String, Integer, String>
 
   @Transient
   @Override
-  public Triple<String, Integer, String> getPartitionKey() {
-    return Triple.of(getRootCategory(), getScore(), getProductId());
+  public Pair<String, Integer> getPartitionKey() {
+    return Pair.of(getRootCategory(), getScore());
   }
 
   @Transient
   @Override
-  public void setPartitionKey(Triple<String, Integer, String> key) {
+  public void setPartitionKey(Pair<String, Integer> key) {
     setRootCategory(key.getLeft());
-    setScore(key.getMiddle());
-    setProductId(key.getRight());
+    setScore(key.getRight());
   }
 
   public String getRootCategory() {

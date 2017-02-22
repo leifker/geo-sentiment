@@ -94,24 +94,24 @@ public class LoaderFixtureTest {
         containsInAnyOrder(expectedCategoryPaths.entrySet().toArray()));
   }
 
-  private static final Set<Triple<String, Integer, String>> expectedReviewKeys = ImmutableSet.of(
-      Triple.of("Books", 5, "0000000001"),
-      Triple.of("Music", 4, "0000000002"),
-      Triple.of("Music", 5, "0000000002"),
-      Triple.of("Tools & Home Improvement", 2, "0000000003"),
-      Triple.of("Tools & Home Improvement", 4, "0000000003"),
-      Triple.of("Music", 4, "0000000004"),
-      Triple.of("Music", 5, "0000000004"),
-      Triple.of("Sports & Outdoors", 5, "0000000005"),
-      Triple.of("Books", 2, "0000000006"),
-      Triple.of("Books", 5, "0000000006"),
-      Triple.of("Sports & Outdoors", 2, "0000000007"),
-      Triple.of("Sports & Outdoors", 5, "0000000007"),
-      Triple.of("Books", 1, "0000000008"),
-      Triple.of("Music", 5, "0000000009"),
-      Triple.of("", 5, "0000000010"),
-      Triple.of("Movies & TV", 5, "0000000011"),
-      Triple.of("Office Products", 1, "0000000012")
+  private static final Set<Pair<String, Integer>> expectedReviewKeys = ImmutableSet.of(
+      Pair.of("Books", 5),
+      Pair.of("Music", 4),
+      Pair.of("Music", 5),
+      Pair.of("Tools & Home Improvement", 2),
+      Pair.of("Tools & Home Improvement", 4),
+      Pair.of("Music", 4),
+      Pair.of("Music", 5),
+      Pair.of("Sports & Outdoors", 5),
+      Pair.of("Books", 2),
+      Pair.of("Books", 5),
+      Pair.of("Sports & Outdoors", 2),
+      Pair.of("Sports & Outdoors", 5),
+      Pair.of("Books", 1),
+      Pair.of("Music", 5),
+      Pair.of("", 5),
+      Pair.of("Movies & TV", 5),
+      Pair.of("Office Products", 1)
   );
   private static final Map<Pair<String, Integer>, Set<String>> expectedScoredReviews = new ImmutableMap.Builder<Pair<String, Integer>, Set<String>>()
       .put(Pair.of("0000000001", 5), ImmutableSet.of("review 1", "review 13"))
