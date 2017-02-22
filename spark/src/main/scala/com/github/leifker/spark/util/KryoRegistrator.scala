@@ -4,6 +4,7 @@ import com.datastax.spark.connector.{CassandraRow, CassandraRowMetadata}
 import com.esotericsoftware.kryo.Kryo
 import com.github.leifker.cassandra.config.{CassandraConfig, KeyspaceConfig}
 import com.github.leifker.spark.sentiment.Review
+import org.apache.spark.mllib.stat.MultivariateOnlineSummarizer
 import org.apache.spark.serializer.{KryoRegistrator => SparkKryoRegistrator}
 
 /**
@@ -11,6 +12,13 @@ import org.apache.spark.serializer.{KryoRegistrator => SparkKryoRegistrator}
   */
 class KryoRegistrator extends SparkKryoRegistrator {
   override def registerClasses(kryo: Kryo) {
+    kryo.register(Class.forName("scala.math.Ordering$$anon$9"))
+    kryo.register(Class.forName("scala.math.Ordering$$anonfun$by$1"))
+    kryo.register(Class.forName("org.apache.spark.ml.feature.CountVectorizer$$anonfun$6"))
+    kryo.register(Class.forName("org.apache.spark.ml.classification.MultiClassSummarizer"))
+    kryo.register(Class.forName("[[B"))
+    kryo.register(scala.math.Ordering.Long.getClass)
+    kryo.register(classOf[MultivariateOnlineSummarizer])
     kryo.register(classOf[Review])
     kryo.register(classOf[CassandraConfig])
     kryo.register(classOf[KeyspaceConfig])
@@ -19,5 +27,6 @@ class KryoRegistrator extends SparkKryoRegistrator {
     kryo.register(classOf[CassandraRowMetadata])
     kryo.register(classOf[scala.collection.mutable.WrappedArray.ofRef[_]])
     kryo.register(classOf[Array[Object]])
+    kryo.register(classOf[Array[Double]])
   }
 }
