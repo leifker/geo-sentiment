@@ -12,14 +12,23 @@ import org.apache.spark.sql.DataFrame
   * Created by dleifker on 2/16/17.
   */
 case class AmazonReviews(cassandraConfig: CassandraSparkConfig, keyspaceConfig: KeyspaceConfig, appName: String = "AmazonReviews") extends CassandraSparkContext(cassandraConfig, appName) {
-  lazy val reviews: CassandraTableScanRDD[CassandraRow] = session.sparkContext.cassandraTable(keyspaceConfig.getName, "amazon_reviews_by_category_score")
-  lazy val categories: CassandraTableScanRDD[CassandraRow] = session.sparkContext.cassandraTable(keyspaceConfig.getName, "amazon_category_by_productid")
+  val reviews: CassandraTableScanRDD[CassandraRow] = session.sparkContext.cassandraTable(keyspaceConfig.getName, "amazon_reviews_by_category_score")
+  val categories: CassandraTableScanRDD[CassandraRow] = session.sparkContext.cassandraTable(keyspaceConfig.getName, "amazon_category_by_productid")
 
-  lazy val electronicsCategories = Seq("Electronics", "All Electronics", "Car Electronics", "Computers", "Camera & Photo", "Cell Phones & Accessories", "Video Games",
-    "GPS & Navigation", "MP3 Players & Accessories", "Software")
+  val categoriesMap: Map[String, Set[String]] = Map("Electronics" -> Set("Electronics", "All Electronics", "Car Electronics", "Computers", "Camera & Photo", "Cell Phones & Accessories",
+    "Video Games", "GPS & Navigation", "MP3 Players & Accessories", "Software"))
+  val scores: Seq[Int] = Range.inclusive(1, 5)
 
-  lazy val electronicsReviews: Seq[CassandraTableScanRDD[CassandraRow]] = electronicsCategories
-    .map(reviews.select("rootcategory", "score", "reviewtext").where("rootcategory = ?", _))
+  val categoryScoreMap: Map[String, Map[Int, Seq[RDD[CassandraRow]]]] = {
+    categoriesMap.map(entry =>
+      entry._1 -> entry._2.flatMap(subCategory =>
+        scores.map(score =>
+          score -> reviews.select("rootcategory", "score", "reviewtext")
+            .where("rootcategory = ? AND score = ?", subCategory, score)
+        )
+      ).toSeq.groupBy(_._1).mapValues(_.map(_._2))
+    )
+  }
 
   import session.sqlContext.implicits._
 
@@ -30,26 +39,16 @@ case class AmazonReviews(cassandraConfig: CassandraSparkConfig, keyspaceConfig: 
      137152 4.0
      151993 5.0
    */
-  lazy val fiveStarElectronics: DataFrame = union(electronicsReviews.map(_.where("score = ?", 5)))
-    .map(r => Review(r.getInt("score"), r.getString("reviewtext")))
-    .toDF()
-  lazy val fourStarElectronics: DataFrame = union(electronicsReviews.map(_.where("score = ?", 4)))
-    .map(r => Review(r.getInt("score"), r.getString("reviewtext")))
-    .toDF()
-  lazy val threeStarElectronics: DataFrame = union(electronicsReviews.map(_.where("score = ?", 3)))
-    .map(r => Review(r.getInt("score"), r.getString("reviewtext")))
-    .toDF()
-  lazy val twoStarElectronics: DataFrame = union(electronicsReviews.map(_.where("score = ?", 2)))
-    .map(r => Review(r.getInt("score"), r.getString("reviewtext")))
-    .toDF()
-  lazy val oneStarElectronics: DataFrame = union(electronicsReviews.map(_.where("score = ?", 1)))
-    .map(r => Review(r.getInt("score"), r.getString("reviewtext")))
-    .toDF()
+  lazy val fiveStarElectronics: DataFrame = unionAll(categoryScoreMap("Electronics")(5)).toDF()
+  lazy val fourStarElectronics: DataFrame = unionAll(categoryScoreMap("Electronics")(4)).toDF()
+  lazy val threeStarElectronics: DataFrame = unionAll(categoryScoreMap("Electronics")(3)).toDF()
+  lazy val twoStarElectronics: DataFrame = unionAll(categoryScoreMap("Electronics")(2)).toDF()
+  lazy val oneStarElectronics: DataFrame = unionAll(categoryScoreMap("Electronics")(1)).toDF()
 
-  private def union(queries: Seq[RDD[CassandraRow]]): RDD[CassandraRow] = {
+  private def unionAll(queries: Seq[RDD[CassandraRow]]): RDD[Review] = {
     queries.foldLeft(null: RDD[CassandraRow])({
       case (a, b) if a == null => b
       case (a, b)  => a.union(b)
-    })
+    }).map(r => Review(r.getInt("score"), r.getString("reviewtext")))
   }
 }

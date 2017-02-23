@@ -17,12 +17,12 @@ object CassandraSparkConfig {
       cassandraConfig,
       sparkMaster,
       List(
-        ("spark.cassandra.connection.host", cassandraConfig.getSeedHosts),
-        ("spark.serializer", "org.apache.spark.serializer.KryoSerializer"),
-        ("spark.kryo.registrationRequired", "true"),
-        ("spark.kryo.registrator", "com.github.leifker.spark.util.KryoRegistrator"),
-        ("spark.driver.userClassPathFirst", "true"),
-        ("spark.executor.userClassPathFirst", "true")
+        ("spark.cassandra.connection.host", cassandraConfig.getSeedHosts)
+       // ("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+       // ("spark.kryo.registrationRequired", "true"),
+       // ("spark.kryo.registrator", "com.github.leifker.spark.util.KryoRegistrator"),
+       // ("spark.driver.userClassPathFirst", "true"),
+       // ("spark.executor.userClassPathFirst", "true")
       ),
       sparkJars
     )

@@ -15,7 +15,7 @@ import scala.collection.mutable.{ListBuffer, Buffer => MBuffer}
   */
 object NLPUtils {
   val allPunctuation = Pattern.compile("""^[\p{Punct}]+""")
-  private val exclaimQuestion = "?!"
+  private val tokenPatcher = TokenPatchUtil()
 
   lazy val enBundle: LangBundle = LangBundle.bundleForLang(Option("en"))
   lazy val tagger: MaxentTagger = new MaxentTagger("models/english-caseless-left3words-distsim.tagger")
@@ -36,31 +36,39 @@ object NLPUtils {
   }
 
   def processEnhancedTokens(tokens: Vector[String]): Vector[String] = {
-    Seq(tokens.filter(token => !enBundle.isHashtag(token) && !Emoji.isEmoji(token)))
+    val filteredTokens = tokens
+      .filter(token => !enBundle.isHashtag(token) && !Emoji.isEmoji(token))
       .map(withAndAsDelimiter)
-      .map(collapsePunctuation)
-      .map(posFilter)
-      .map(_.filter(word => !enBundle.stopwords(word.toLowerCase)))
-      .map(markAllCaps(_, _ + "!").map(_.toLowerCase()))  // mark caps then drop case
-      .map(patchToken(_, exclaimQuestion, _ + exclaimQuestion))
-      .map(patchToken(_, "?", _ + "?"))
-      .map(patchToken(_, "!", _ + "!"))
-      .head
+
+    val stageOne = collapsePunctuation(filteredTokens)
+
+    val stageTwo = posFilter(stageOne) match {
+      case tokens if tokens.nonEmpty => tokens
+      case tokens => posFilter(tokens, true)
+    }
+
+    val stageThree = stageTwo
+      .filter(word => !enBundle.stopwords(word.toLowerCase))
+      .map(markAllCaps(_, _ + "!"))
+      .map(_.toLowerCase())
+
+    tokenPatcher.patchWithPunctuation(stageThree)
   }
 
   def stringPreprocess(input: String): String = removeTriplicate(input)
 
-  def posFilter(tokens: Seq[String]): Vector[String] = {
+  def posFilter(tokens: Seq[String]): Vector[String] = posFilter(tokens, false)
+  def posFilter(tokens: Seq[String], includeNoun: Boolean): Vector[String] = {
     stanfordTaggedSentences(tokens)
       .map(sentence =>
         sentence
-          .filter(tagWord => !tagWord.tag().startsWith("NN") || sentenceDelimiterPattern.matcher(tagWord.word()).matches())
+          .filter(tagWord => includeNoun || !tagWord.tag().startsWith("NN") || tokenPatcher.sentenceDelimiterPattern.matcher(tagWord.word()).matches())
           .filter(tagWord => !tagWord.tag().startsWith("WP") || !tagWord.tag().startsWith("PRP"))
           .filter(tagWord => !Set("DT", "MD", "CD", "IN", "POS").contains(tagWord.tag()))
           .map(_.word)
       )
       .filter(_.nonEmpty)
-      .filter(sentence => sentence.size > 1 || !sentenceDelimiterPattern.matcher(sentence.head).matches())
+      .filter(sentence => sentence.size > 1 || !tokenPatcher.sentenceDelimiterPattern.matcher(sentence.head).matches())
       .flatMap(_.iterator)
       .toVector
   }
@@ -76,7 +84,7 @@ object NLPUtils {
     val seqs = MBuffer.empty[Vector[String]]
     val thisbf = MBuffer.empty[String]
     for (token <- tokens) {
-      if (!sentenceDelimiterPattern.matcher(token).matches()) {
+      if (!tokenPatcher.sentenceDelimiterPattern.matcher(token).matches()) {
         thisbf += token
       } else {
         if (includePunctuation) {
@@ -95,45 +103,21 @@ object NLPUtils {
     seqs
   }
 
-  def patchToken(tokens: Vector[String], punctuationTarget: String, mutator: String => String): Vector[String] = {
-    patchTokens(tokens, tokens.length - 1, Seq(punctuationTarget), mutator)
+  private def withAndAsDelimiter(input: String): String = input match {
+    case word if word.equalsIgnoreCase("and") => "&"
+    case word => word
   }
 
-  private def patchTokens(tokens: Vector[String], endIdx: Int, punctuationTarget: Seq[String], mutator: String => String): Vector[String] = {
-    val lastIdx = tokens.lastIndexOfSlice(punctuationTarget, endIdx)
-    if (lastIdx > 0) {
-      val prevPunctIdx = prevPunctuation(tokens, lastIdx - 1)
-      val startPatchIdx = prevPunctIdx + punctuationTarget.size
-      val nextTokens = lastIdx - startPatchIdx match {
-        case diff if diff > 0 => tokens.patch(startPatchIdx, tokens.slice(startPatchIdx, lastIdx).map(mutator), diff)
-        case _ => tokens
-      }
-      patchTokens(nextTokens, prevPunctIdx, punctuationTarget, mutator)
-    } else {
-      tokens
-    }
-  }
-
-  private val sentenceDelimiterPattern = Pattern.compile("""[.?!,&#]+""")
-  private def prevPunctuation(tokens: Vector[String], endIdx: Int): Int = tokens.lastIndexWhere(sentenceDelimiterPattern.matcher(_).matches(), endIdx)
-
-  private def withAndAsDelimiter(tokens: Vector[String]): Vector[String] = {
-    tokens.map({
-      case word if word.equalsIgnoreCase("and") => "&"
-      case word => word
-    })
-  }
-
-  private def markAllCaps(tokens: Vector[String], mutator: String => String): Vector[String] = tokens.map({
+  private def markAllCaps(input: String, mutator: String => String): String = input match {
     case str if str.length > 1 && !allPunctuation.matcher(str).matches() && str == str.toUpperCase => mutator(str)
     case str => str
-  })
+  }
 
-  private val collapsable: Set[String]  = Set("!", "?")
+  private val collapsible: Set[String]  = Set("!", "?")
   private def collapsePunctuation(input: Vector[String]): Vector[String] = {
     (ListBuffer[String]() /: input){
-      case (a, b) if a.nonEmpty && collapsable.contains(b) && (a.last == b || a.last == exclaimQuestion) => a
-      case (a, b) if a.nonEmpty && collapsable.contains(a.last) && collapsable.contains(b) => a.trimEnd(1); a += exclaimQuestion
+      case (a, b) if a.nonEmpty && collapsible.contains(b) && (a.last == b || a.last == tokenPatcher.exclaimQuestion) => a
+      case (a, b) if a.nonEmpty && collapsible.contains(a.last) && collapsible.contains(b) => a.trimEnd(1); a += tokenPatcher.exclaimQuestion
       case (a, b) => a += b
     }.toVector
   }

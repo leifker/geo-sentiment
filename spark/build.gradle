@@ -9,20 +9,17 @@ dependencies {
   // compileOnly - excludes transitives from shadow - provided by cluster
   compileOnly "org.apache.spark:spark-core_2.11:$sparkVersion"
   compileOnly "org.apache.spark:spark-sql_2.11:$sparkVersion"
+  compileOnly "org.apache.spark:spark-mllib_2.11:$sparkVersion"
 
-  compile "org.scala-lang:scala-library:$scalaVersion"
   compile 'com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3'
   compile 'com.peoplepattern:lib-text_2.11:0.3.2'
   compile ":stanford-postagger:$stanfordVersion"
   compile "edu.stanford.nlp:stanford-corenlp:$stanfordVersion"
-  compile "org.apache.spark:spark-mllib_2.11:$sparkVersion"
-  compile "org.apache.spark:spark-sql_2.11:$sparkVersion"
 
   integrationTestCompile "org.apache.spark:spark-core_2.11:$sparkVersion"
   integrationTestCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"
+  integrationTestCompile "org.apache.spark:spark-mllib_2.11:$sparkVersion"
 
-  testCompile "org.apache.spark:spark-core_2.11:$sparkVersion"
-  testCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"
   testCompile 'org.scalatest:scalatest_2.11:3.0.1'
   testRuntime 'org.pegdown:pegdown:1.1.0'
 }
@@ -46,14 +43,12 @@ shadowJar {
   zip64 true
   classifier = 'shadow'
   dependencies {
-    exclude(dependency("org.scala-lang:scala-library:$scalaVersion"))
     exclude(dependency("org.apache.spark:spark-core_2.11:$sparkVersion"))
     exclude(dependency("org.apache.spark:spark-sql_2.11:$sparkVersion"))
+    exclude(dependency("org.apache.spark:spark-mllib_2.11:$sparkVersion"))
   }
 }
 
-
-// for cluster integration tests
 integrationTest.dependsOn(shadowJar)
 
 sourceSets {
