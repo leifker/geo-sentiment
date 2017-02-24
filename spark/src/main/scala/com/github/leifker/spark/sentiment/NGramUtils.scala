@@ -15,18 +15,19 @@ object NGramUtils {
     * @param text to anaylze
     * @return grams
     */
-  def nGrams(text: String): Seq[String] = {
+  def nGrams(text: String, max: Int = 3): Seq[String] = {
     val tokens = NLPUtils.tokenize(text)
     val hashTagTokens = NLPUtils.hashTagTokens(tokens)
     val emoijTokens = NLPUtils.emojiTokens(tokens)
-    val enhancedTokens = if (NLPUtils.isEnglish(text)) termNgrams(NLPUtils.enhancedTokens(tokens), 1, 3) else Seq.empty
+    val enhancedTokens = if (NLPUtils.isEnglish(text)) termNgrams(NLPUtils.enhancedTokens(tokens), 1, max) else Seq.empty
+
     enhancedTokens ++ hashTagTokens ++ emoijTokens
   }
 
   private def termNgrams(tokens: Seq[String], min: Int, max: Int): Seq[String] = {
     def partialSeqSet(seq: Vector[String], min: Int, max: Int): Seq[String] = {
-      val termNgrams = MBuffer.empty[Vector[String]];
-      val termFilters = MSet.empty[Vector[String]];
+      val termNgrams = MBuffer.empty[Vector[String]]
+      val termFilters = MSet.empty[Vector[String]]
       for {
         n <- Math.min(max, seq.size) to min by -1
       } {

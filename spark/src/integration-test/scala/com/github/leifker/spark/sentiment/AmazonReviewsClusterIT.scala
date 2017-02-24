@@ -2,9 +2,9 @@ package com.github.leifker.spark.sentiment
 
 import com.github.leifker.spark.test.{ITest, ITestContext}
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.classification.NaiveBayes
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.feature.{Binarizer, CountVectorizer, CountVectorizerModel, HashingTF}
+import org.apache.spark.ml.feature._
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.scalatest.FlatSpec
@@ -34,23 +34,28 @@ class AmazonReviewsClusterIT extends FlatSpec {
   }
 
   it should "pipeline" taggedAs(ITest, Slow) in {
-    val data = oneStarReviews.union(fiveStarReviews) //.filter(r => NGramUtils.nGrams(r.getString(1)).nonEmpty)
+    val data = oneStarReviews.union(fiveStarReviews)
+      .repartition(64)
 
-    val tokenizer = new ReviewTokenizer().setInputCol("text").setOutputCol("words")
-    val binarizer: Binarizer = new Binarizer()
+    data.show(100)
+
+    val tokenizer: ReviewTokenizer = new ReviewTokenizer()
+      .setInputCol("text")
+      .setOutputCol("words")
+    val binarizer: InverseBinarizer = new InverseBinarizer()
       .setInputCol("score")
       .setOutputCol("label")
       .setThreshold(3.0)
     val hashingTF = new HashingTF()
       .setInputCol(tokenizer.getOutputCol)
       .setOutputCol("features")
-    val lr = new LogisticRegression()
-      .setMaxIter(10)
+      .setNumFeatures(3000)
+    val nb = new NaiveBayes()
     val pipeline = new Pipeline()
-      .setStages(Array(tokenizer, binarizer, hashingTF, lr))
+      .setStages(Array(tokenizer, binarizer, hashingTF, nb))
 
     val paramGrid = new ParamGridBuilder()
-      .addGrid(hashingTF.numFeatures, Array(100, 1000))
+      .addGrid(tokenizer.maxNGram, Array(1, 2, 3))
       .build()
 
     // We now treat the Pipeline as an Estimator, wrapping it in a CrossValidator instance.
@@ -66,6 +71,7 @@ class AmazonReviewsClusterIT extends FlatSpec {
 
     // Run cross-validation, and choose the best set of parameters.
     val cvModel = cv.fit(data)
+    println(cvModel.uid)
 
     // Make predictions on test documents. cvModel uses the best model found (lrModel).
     cvModel.transform(sampleReviews.sample(false, 0.1)).show(Math.ceil(sampleReviews.count() * 0.1).toInt)
