@@ -65,7 +65,7 @@ class ReviewTokenizerTest extends FlatSpec {
       "tear makes interesting",
       "believable",
       "highly recommend",
-      "usually! don't! western!"
+      "usually! dont! western!"
     ))
   }
 
@@ -74,7 +74,7 @@ class ReviewTokenizerTest extends FlatSpec {
       "Liked it so much after owning the black one for 2 years, I bought the white one! Only way it could be better is if the alarm functioned better and it didn't need replacement batteries."
     )
     assert(terms == Vector(
-      "owning black", "bought! white!", "better functioned", "didn't"
+      "owning black", "bought! white!", "better functioned", "didnt"
     ))
   }
 
@@ -127,5 +127,11 @@ class ReviewTokenizerTest extends FlatSpec {
     assert(
       tokenizer.transform("This is the most interesting test I've every taken.It is clearly the best test ever.") ==
         Seq("interesting", "best"))
+  }
+
+  it should "Remove number periods" taggedAs(UnitTest) in {
+    assert(
+      tokenizer.transform("1. Absolutely fabulous") == Seq("absolutely fabulous")
+    )
   }
 }

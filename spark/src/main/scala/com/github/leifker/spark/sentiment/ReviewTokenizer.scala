@@ -65,7 +65,20 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
   /** @group getParam */
   def getShadeGrams: Boolean = $(shadeGrams)
 
-  setDefault(maxNGram -> 3, exclaimQuestion -> false, posMode -> POSMode.FilterNouns, shadeGrams -> false)
+  /**
+    * Indicates whether ! or ? should be pushed down into the word tokens within sentences
+    * Default: true
+    * @group param
+    */
+  val markAllCaps: BooleanParam = new BooleanParam(this, "markAllCaps", "Apply ! when word in all caps")
+
+  /** @group setParam */
+  def setMarkAllCaps(value: Boolean): this.type = set(markAllCaps, value)
+
+  /** @group getParam */
+  def getMarkAllCaps: Boolean = $(markAllCaps)
+
+  setDefault(maxNGram -> 3, exclaimQuestion -> false, posMode -> POSMode.FilterNouns, shadeGrams -> false, markAllCaps -> true)
 
   protected override def createTransformFunc: (String) => Seq[String] = text => {
     val tokens = stringPreprocess(text).tokens
@@ -91,7 +104,7 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
 
   def processEnhancedTokens(tokens: Vector[String]): Seq[Vector[String]] = {
     val filteredTokens = tokens
-      .filter(token => !NLPUtils.isHashtag(token) && !Emoji.isEmoji(token))
+      .filter(token => !NLPUtils.isHashtag(token) && !Emoji.isEmoji(token) && !startsWithDigit(token))
       .map(withAndAsDelimiter)
 
     val stageOne = collapsePunctuation(filteredTokens)
@@ -111,14 +124,18 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
     if (getExclaimQuestion) stageThree.map(TokenPatchUtil.patchWithPunctuation) else stageThree
   }
 
-  def stringPreprocess(input: String): String = removeTriplicate(input)
-
-  private def removeTriplicate(input: String): String = {
+  private val removeTriplicate = (input: String) => {
     (new StringBuilder(input.length) /: input.toCharArray){
       case (a, b) if a.size > 2 && a.charAt(a.length - 1) == b && a.charAt(a.length - 2) == b => a
       case (a, b) => a += b
     }.toString
   }
+
+  private val removeApos: (String) => String = _.replaceAll("'", "")
+
+  private val startsWithDigit = (input: String) => input.headOption.exists(_.isDigit)
+
+  val stringPreprocess: (String) => String = removeTriplicate andThen removeApos
 
   private def withAndAsDelimiter(input: String): String = input match {
     case word if word.equalsIgnoreCase("and") => "&"
@@ -126,7 +143,7 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
   }
 
   private def markAllCaps(input: String, mutator: String => String = _ + "!"): String = input match {
-    case str if str.length > 1 && !Constants.allPunctuation.matcher(str).matches() && str == str.toUpperCase => mutator(str)
+    case str if getMarkAllCaps && str.length > 1 && !Constants.allPunctuation.matcher(str).matches() && str == str.toUpperCase => mutator(str)
     case str => str
   }
 

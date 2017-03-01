@@ -1,5 +1,6 @@
 package com.github.leifker.spark.sentiment
 
+import com.github.leifker.spark.Cacher
 import com.github.leifker.spark.test.{ITest, ITestContext}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.classification.NaiveBayes
@@ -49,20 +50,19 @@ class AmazonReviewsClusterIT extends FlatSpec {
     val countVectorizer = new CountVectorizer()
       .setInputCol(tokenizer.getOutputCol)
       .setOutputCol("features")
-      .setBinary(true)
+      .setMinDF(100)
     /* val hashingTF = new HashingTF()
       .setInputCol(tokenizer.getOutputCol)
       .setOutputCol("features")
       .setNumFeatures(5000) */
     // val svm = new SVMWithSGD()
     val nb = new NaiveBayes()
-      .setModelType("bernoulli")
     val pipeline = new Pipeline()
       .setStages(Array(tokenizer, binarizer, countVectorizer, nb))
 
     val paramGrid = new ParamGridBuilder()
-      .addGrid(countVectorizer.minDF, Array(100.0, 500.0, 1000.0))
-      .addGrid(countVectorizer.vocabSize, Array(1000, 5000, 100000))
+      .addGrid(tokenizer.markAllCaps, Array(true, false))
+      .addGrid(countVectorizer.vocabSize, Array(1000, 5000, 10000))
       .build()
 
     // We now treat the Pipeline as an Estimator, wrapping it in a CrossValidator instance.
@@ -79,7 +79,10 @@ class AmazonReviewsClusterIT extends FlatSpec {
     // Run cross-validation, and choose the best set of parameters.
     val cvModel = cv.fit(data)
     cvModel.avgMetrics.foreach(println)
+    println("Tokenizer")
     println(cvModel.bestModel.asInstanceOf[PipelineModel].stages(0).explainParams())
+    println("CountVectorizer")
+    println(cvModel.bestModel.asInstanceOf[PipelineModel].stages(3).explainParams())
 
     // Make predictions on test documents. cvModel uses the best model found.
     cvModel.transform(sampleReviews.sample(false, 0.1)).show(Math.ceil(sampleReviews.count() * 0.1).toInt)
