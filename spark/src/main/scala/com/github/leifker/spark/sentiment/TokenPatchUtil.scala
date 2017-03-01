@@ -1,18 +1,16 @@
 package com.github.leifker.spark.sentiment
 
-import java.util.regex.Pattern
-
 /**
   * Created by dleifker on 2/23/17.
   */
-case class TokenPatchUtil(exclaimQuestion: String = "?!", sentenceDelimiterPattern: Pattern = Pattern.compile("""[.?!,&#]+""")) {
-  private val patchExclaimQuestion = (tokens: Vector[String]) => patchToken(tokens, exclaimQuestion, _ + exclaimQuestion)
+object TokenPatchUtil {
+  private val patchExclaimQuestion = (tokens: Vector[String]) => patchToken(tokens, Constants.exclaimQuestion, _ + Constants.exclaimQuestion)
   private val patchQuestion = (tokens: Vector[String]) => patchToken(tokens, "?", _ + "?")
   private val patchExclaim = (tokens: Vector[String]) => patchToken(tokens, "!", _ + "!")
 
   val patchWithPunctuation: (Vector[String]) => Vector[String] = patchExclaimQuestion andThen patchExclaim andThen patchQuestion
 
-  private def prevPunctuation(tokens: Vector[String], endIdx: Int): Int = tokens.lastIndexWhere(sentenceDelimiterPattern.matcher(_).matches(), endIdx)
+  private def prevPunctuation(tokens: Vector[String], endIdx: Int): Int = tokens.lastIndexWhere(Constants.sentenceDelimiter.matcher(_).matches(), endIdx)
 
   private def patchToken(tokens: Vector[String], punctuationTarget: String, mutator: String => String): Vector[String] = {
     patchTokens(tokens, tokens.length - 1, Seq(punctuationTarget), mutator)

@@ -21,7 +21,8 @@ class AmazonReviewsIT extends FlatSpec {
     .union(amazonReviews.fiveStarElectronics.sample(false, 0.007))
 
   "Spark" should "be able to process text reviews of sample rows" taggedAs(ITest, Slow) in {
-    sampleReviews.foreach(row => NLPUtils.enhancedTokens(row.getAs[String]("text")))
+    val tokenizer = new ReviewTokenizer()
+    sampleReviews.foreach(row => tokenizer.transform(row.getAs[String]("text")))
   }
 
   it should "be able get at least a 500 sample" taggedAs(ITest, Slow) in {

@@ -20,6 +20,10 @@ dependencies {
   integrationTestCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"
   integrationTestCompile "org.apache.spark:spark-mllib_2.11:$sparkVersion"
 
+  testCompile "org.apache.spark:spark-core_2.11:$sparkVersion"
+  testCompile "org.apache.spark:spark-sql_2.11:$sparkVersion"
+  testCompile "org.apache.spark:spark-mllib_2.11:$sparkVersion"
+
   testCompile 'org.scalatest:scalatest_2.11:3.0.1'
   testRuntime 'org.pegdown:pegdown:1.1.0'
 }

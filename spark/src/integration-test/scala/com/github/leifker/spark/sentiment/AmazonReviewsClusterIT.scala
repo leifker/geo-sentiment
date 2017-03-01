@@ -1,7 +1,7 @@
 package com.github.leifker.spark.sentiment
 
 import com.github.leifker.spark.test.{ITest, ITestContext}
-import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.classification.NaiveBayes
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
 import org.apache.spark.ml.feature._
@@ -34,7 +34,7 @@ class AmazonReviewsClusterIT extends FlatSpec {
   }
 
   it should "pipeline" taggedAs(ITest, Slow) in {
-    val data = oneStarReviews.union(fiveStarReviews)
+    val data = oneStarReviews.limit(150000).union(fiveStarReviews.limit(150000))
       .repartition(64)
 
     data.show(100)
@@ -42,20 +42,27 @@ class AmazonReviewsClusterIT extends FlatSpec {
     val tokenizer: ReviewTokenizer = new ReviewTokenizer()
       .setInputCol("text")
       .setOutputCol("words")
-    val binarizer: InverseBinarizer = new InverseBinarizer()
+    val binarizer: Binarizer = new Binarizer()
       .setInputCol("score")
       .setOutputCol("label")
       .setThreshold(3.0)
-    val hashingTF = new HashingTF()
+    val countVectorizer = new CountVectorizer()
       .setInputCol(tokenizer.getOutputCol)
       .setOutputCol("features")
-      .setNumFeatures(3000)
+      .setBinary(true)
+    /* val hashingTF = new HashingTF()
+      .setInputCol(tokenizer.getOutputCol)
+      .setOutputCol("features")
+      .setNumFeatures(5000) */
+    // val svm = new SVMWithSGD()
     val nb = new NaiveBayes()
+      .setModelType("bernoulli")
     val pipeline = new Pipeline()
-      .setStages(Array(tokenizer, binarizer, hashingTF, nb))
+      .setStages(Array(tokenizer, binarizer, countVectorizer, nb))
 
     val paramGrid = new ParamGridBuilder()
-      .addGrid(tokenizer.maxNGram, Array(1, 2, 3))
+      .addGrid(countVectorizer.minDF, Array(100.0, 500.0, 1000.0))
+      .addGrid(countVectorizer.vocabSize, Array(1000, 5000, 100000))
       .build()
 
     // We now treat the Pipeline as an Estimator, wrapping it in a CrossValidator instance.
@@ -67,13 +74,14 @@ class AmazonReviewsClusterIT extends FlatSpec {
       .setEstimator(pipeline)
       .setEvaluator(new BinaryClassificationEvaluator)
       .setEstimatorParamMaps(paramGrid)
-      .setNumFolds(2)  // Use 3+ in practice
+      .setNumFolds(3)  // Use 3+ in practice
 
     // Run cross-validation, and choose the best set of parameters.
     val cvModel = cv.fit(data)
-    println(cvModel.uid)
+    cvModel.avgMetrics.foreach(println)
+    println(cvModel.bestModel.asInstanceOf[PipelineModel].stages(0).explainParams())
 
-    // Make predictions on test documents. cvModel uses the best model found (lrModel).
+    // Make predictions on test documents. cvModel uses the best model found.
     cvModel.transform(sampleReviews.sample(false, 0.1)).show(Math.ceil(sampleReviews.count() * 0.1).toInt)
   }
 }
