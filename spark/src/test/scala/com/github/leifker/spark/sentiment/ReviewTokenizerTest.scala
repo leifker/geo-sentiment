@@ -10,6 +10,7 @@ class ReviewTokenizerTest extends FlatSpec {
   val tokenizer: ReviewTokenizer = new ReviewTokenizer()
     .setShadeGrams(true)
     .setExclaimQuestion(true)
+    .setMarkAllCaps(true)
 
   "NGramUtils" should "be able to extract n-grams without stop words" taggedAs(UnitTest) in {
     assert(tokenizer.transform("This is not good food").toSet == Set("not good"))

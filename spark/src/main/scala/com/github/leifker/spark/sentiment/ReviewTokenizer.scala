@@ -78,7 +78,20 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
   /** @group getParam */
   def getMarkAllCaps: Boolean = $(markAllCaps)
 
-  setDefault(maxNGram -> 3, exclaimQuestion -> false, posMode -> POSMode.FilterNouns, shadeGrams -> false, markAllCaps -> true)
+  /**
+    * Whether or not to use stopwords
+    * Default: true
+    * @group param
+    */
+  val stopWords: BooleanParam = new BooleanParam(this, "stopWords", "Apply stopwords")
+
+  /** @group setParam */
+  def setStopWords(value: Boolean): this.type = set(stopWords, value)
+
+  /** @group getParam */
+  def getStopWords: Boolean = $(stopWords)
+
+  setDefault(maxNGram -> 3, exclaimQuestion -> false, posMode -> POSMode.FilterNouns, shadeGrams -> false, markAllCaps -> false, stopWords -> true)
 
   protected override def createTransformFunc: (String) => Seq[String] = text => {
     val tokens = stringPreprocess(text).tokens
@@ -104,7 +117,7 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
 
   def processEnhancedTokens(tokens: Vector[String]): Seq[Vector[String]] = {
     val filteredTokens = tokens
-      .filter(token => !NLPUtils.isHashtag(token) && !Emoji.isEmoji(token) && !startsWithDigit(token))
+      .filter(token => !NLPUtils.isHashtag(token) && !Emoji.isEmoji(token) && !containsDigit(token))
       .map(withAndAsDelimiter)
 
     val stageOne = collapsePunctuation(filteredTokens)
@@ -117,7 +130,7 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
 
     val stageThree = stageTwo
       .map(sentence => sentence
-          .filter(word => !NLPUtils.enBundle.stopwords(word.toLowerCase))
+          .filter(word => getStopWords && !NLPUtils.enBundle.stopwords(word.toLowerCase))
           .map(markAllCaps(_))
           .map(_.toLowerCase))
 
@@ -133,7 +146,7 @@ class ReviewTokenizer(override val uid: String) extends UnaryTransformer[String,
 
   private val removeApos: (String) => String = _.replaceAll("'", "")
 
-  private val startsWithDigit = (input: String) => input.headOption.exists(_.isDigit)
+  private val containsDigit = (input: String) => Constants.containsDigit.matcher(input).matches
 
   val stringPreprocess: (String) => String = removeTriplicate andThen removeApos
 

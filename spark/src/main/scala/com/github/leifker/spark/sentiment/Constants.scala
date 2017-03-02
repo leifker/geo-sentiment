@@ -10,4 +10,5 @@ object Constants {
   val sentenceDelimiter = Pattern.compile("""[.?!,&#]+""")
   val exclaimQuestion = "?!"
   val htmlEntity = Pattern.compile("""^&\w+;$""")
+  val containsDigit = Pattern.compile("""^.*[0-9].*$""")
 }
