@@ -49,6 +49,6 @@ case class AmazonReviews(cassandraConfig: CassandraSparkConfig, keyspaceConfig: 
     queries.foldLeft(null: RDD[CassandraRow])({
       case (a, b) if a == null => b
       case (a, b)  => a.union(b)
-    }).map(r => Review(r.getInt("score"), r.getString("reviewtext")))
+    }).map(r => Review(r.getInt("score"), r.getString("reviewtext"), r.getString("productid")))
   }
 }

@@ -34,7 +34,7 @@ class AmazonReviewsClusterIT extends FlatSpec {
   }
 
   it should "pipeline" taggedAs(ITest, Slow) in {
-    val data = oneStarReviews.limit(15000).union(fiveStarReviews.limit(15000))
+    val data = oneStarReviews.limit(150000).union(fiveStarReviews.limit(150000))
       .repartition(64)
 
     data.show(100)
@@ -62,7 +62,7 @@ class AmazonReviewsClusterIT extends FlatSpec {
       .setStages(Array(tokenizer, binarizer, countVectorizer, nb))
 
     val paramGrid = new ParamGridBuilder()
-      .addGrid(countVectorizer.minDF, Array(100, 200))
+      .addGrid(countVectorizer.minDF, Array(100.0, 200.0))
       .build()
 
     // We now treat the Pipeline as an Estimator, wrapping it in a CrossValidator instance.
@@ -86,7 +86,7 @@ class AmazonReviewsClusterIT extends FlatSpec {
 
     // Make predictions on test documents. cvModel uses the best model found.
     cvModel.transform(sampleReviews.sample(false, 0.1))
-      .select("score", "label", "words")
-      .show(Math.ceil(sampleReviews.count() * 0.1).toInt, false)
+      .select("label", "prediction", "productid", "words")
+      .show(Math.ceil(sampleReviews.count() * 0.1).toInt)
   }
 }
