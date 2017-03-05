@@ -4,10 +4,11 @@ import com.github.leifker.cassandra.config.CassandraConfig
 import com.github.leifker.spark.CassandraSparkContext
 import com.github.leifker.spark.config.CassandraSparkConfig
 import com.github.leifker.spark.sentiment.test.UnitTest
-import org.apache.spark.ml.classification.LogisticRegression
-import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.feature.{HashingTF, Tokenizer}
+import org.apache.spark.ml.classification.{DecisionTreeClassifier, LogisticRegression, MultilayerPerceptronClassifier, NaiveBayes}
+import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, RegressionEvaluator}
+import org.apache.spark.ml.feature._
 import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.ml.regression.GeneralizedLinearRegression
 import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.sql.Row
 import org.scalatest.FlatSpec
@@ -67,6 +68,59 @@ class MultiCrossValidatorTest extends FlatSpec {
       .setEstimator(pipeline)
       .setEvaluator(new BinaryClassificationEvaluator)
       .setEstimatorParamMaps(paramGrid)
+      .setNumFolds(2)  // Use 3+ in practice
+
+    // Run cross-validation, and choose the best set of parameters.
+    val cvModel = cv.fit(training)
+
+    // Prepare test documents, which are unlabeled (id, text) tuples.
+    val test = sqlContext.createDataFrame(Seq(
+      (4L, "spark i j k"),
+      (5L, "l m n"),
+      (6L, "mapreduce spark"),
+      (7L, "apache hadoop")
+    )).toDF("id", "text")
+
+    // Make predictions on test documents. cvModel uses the best model found (lrModel).
+    cvModel.transform(test)
+      .select("id", "text", "probability", "prediction")
+      .collect()
+      .foreach { case Row(id: Long, text: String, prob: Vector, prediction: Double) =>
+        println(s"($id, $text) --> prob=$prob, prediction=$prediction")
+      }
+  }
+
+  it should "work with multiple algo" taggedAs(UnitTest) in {
+    // Configure an ML pipeline, which consists of three stages: tokenizer, hashingTF, and lr.
+    val lr = new LogisticRegression()
+      .setMaxIter(10)
+    val pipeline = new Pipeline("LogisticRegPipeline")
+      .setStages(Array(tokenizer, hashingTF, lr))
+
+    // We use a ParamGridBuilder to construct a grid of parameters to search over.
+    // With 2 values for hashingTF.numFeatures and 2 values for lr.regParam,
+    // this grid will have 2 x 2 = 4 parameter settings for CrossValidator to choose from.
+    val paramGrid = new ParamGridBuilder()
+      .addGrid(hashingTF.numFeatures, Array(10, 100))
+      .addGrid(lr.regParam, Array(0.1, 0.01))
+      .build()
+
+    val nb = new NaiveBayes()
+    val pipeline2 = new Pipeline("NaiveBayesPipeline")
+      .setStages(Array(tokenizer, hashingTF, nb))
+    val paramGrid2 = new ParamGridBuilder()
+      .addGrid(hashingTF.numFeatures, Array(10, 100))
+      .build()
+
+    // We now treat the Pipeline as an Estimator, wrapping it in a CrossValidator instance.
+    // This will allow us to jointly choose parameters for all Pipeline stages.
+    // A CrossValidator requires an Estimator, a set of Estimator ParamMaps, and an Evaluator.
+    // Note that the evaluator here is a BinaryClassificationEvaluator and its default metric
+    // is areaUnderROC.
+    val cv = new MultiCrossValidator()
+      .setEstimators(Array(pipeline, pipeline2))
+      .setEvaluator(new RegressionEvaluator)
+      .setEstimatorsParamMaps(Array(paramGrid, paramGrid2))
       .setNumFolds(2)  // Use 3+ in practice
 
     // Run cross-validation, and choose the best set of parameters.

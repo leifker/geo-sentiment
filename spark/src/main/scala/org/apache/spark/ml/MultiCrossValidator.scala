@@ -9,7 +9,7 @@ import org.apache.spark.ml.tuning.{CrossValidatorModel, CrossValidatorParams}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{StructType, StructTypeMerge}
 
 /**
   * K-fold cross validation.
@@ -82,13 +82,13 @@ class MultiCrossValidator (override val uid: String)
   @Since("2.0.0")
   override def fit(dataset: Dataset[_]): CrossValidatorModel = {
     val schema = dataset.schema
-    transformSchema(schema, logging = true)
+    transformSchema(schema)
     val sparkSession = dataset.sparkSession
     val ests = $(estimators)
     val eval = $(evaluator)
     val epms = $(estimatorsParamMaps)
     val flatEpms = epms.flatten
-    val numModels = epms.length
+    val numModels = flatEpms.length
     val metrics = new Array[Double](numModels)
     val modelIdxToEstIdx = epms.map(_.length).zipWithIndex.flatMap(idx => List.fill(idx._1)(idx._2))
 
@@ -123,8 +123,21 @@ class MultiCrossValidator (override val uid: String)
     copyValues(new CrossValidatorModel(uid, bestModel, metrics).setParent(this))
   }
 
-  @Since("1.4.0")
-  override def transformSchema(schema: StructType): StructType = transformSchemaImpl(schema)
+  @Since("1.2.0")
+  override def transformSchema(schema: StructType): StructType = {
+    $(estimators).indices.map(idx => transformSchemaImpl(schema, idx))
+      .foldLeft(schema)((acc, curr) => StructTypeMerge.merge(acc, curr))
+  }
+
+  protected def transformSchemaImpl(schema: StructType, idx: Int): StructType = {
+    require($(estimatorsParamMaps)(idx).nonEmpty, s"Validator requires non-empty estimatorParamMaps")
+    val firstEstimatorParamMap = $(estimatorsParamMaps)(idx).head
+    val est = $(estimators)(idx)
+    for (paramMap <- $(estimatorsParamMaps)(idx).tail) {
+      est.copy(paramMap).transformSchema(schema)
+    }
+    est.copy(firstEstimatorParamMap).transformSchema(schema)
+  }
 
   @Since("1.4.0")
   override def copy(extra: ParamMap): MultiCrossValidator = {
