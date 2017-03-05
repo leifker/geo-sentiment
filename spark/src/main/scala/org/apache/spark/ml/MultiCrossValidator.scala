@@ -125,6 +125,7 @@ class MultiCrossValidator (override val uid: String)
 
   @Since("1.2.0")
   override def transformSchema(schema: StructType): StructType = {
+    require($(estimators).length == $(estimatorsParamMaps).length, s"Number of estimators must match number of estimatorParamMaps")
     $(estimators).indices.map(idx => transformSchemaImpl(schema, idx))
       .foldLeft(schema)((acc, curr) => StructTypeMerge.merge(acc, curr))
   }
